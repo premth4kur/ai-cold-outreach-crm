@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Cold Outreach — Control Panel</title>
+<style>
+  :root{
+    --bg:#0f1216; --panel:#171b21; --panel2:#1e232b; --line:#2a313b;
+    --txt:#e6e9ee; --muted:#9aa4b2; --accent:#5b8cff; --accent2:#38d39f;
+    --warn:#ffb454; --danger:#ff6b6b; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px}
+  a{color:var(--accent)}
+  header{display:flex;align-items:center;justify-content:space-between;
+    padding:16px 24px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+  header h1{font-size:16px;margin:0;font-weight:650;letter-spacing:.2px}
+  header h1 span{color:var(--accent)}
+  .status-pill{font-size:12px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+  .status-pill.ok{color:var(--accent2);border-color:#20573f}
+  .status-pill.bad{color:var(--danger);border-color:#5a2a2a}
+  nav{display:flex;gap:4px;padding:12px 24px 0}
+  nav button{background:transparent;border:none;color:var(--muted);padding:9px 16px;
+    border-radius:10px 10px 0 0;cursor:pointer;font-size:13px;font-weight:550}
+  nav button.active{color:var(--txt);background:var(--panel)}
+  main{padding:20px 24px 60px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .grid{display:grid;gap:14px}
+  .metrics{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .metric{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  .metric .n{font-size:26px;font-weight:700;margin-top:6px}
+  .metric .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .metric.accent .n{color:var(--accent)} .metric.green .n{color:var(--accent2)}
+  .metric.warn .n{color:var(--warn)} .metric.danger .n{color:var(--danger)}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px}
+  th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--panel)}
+  tr:hover td{background:var(--panel2)}
+  .badge{font-size:11px;padding:3px 9px;border-radius:999px;white-space:nowrap;border:1px solid var(--line)}
+  .b-New{color:#9ecbff;border-color:#2b4a7a}
+  .b-Sent{color:var(--accent2);border-color:#20573f}
+  .b-EmailReady{color:#c3a6ff;border-color:#4a3a72}
+  .b-ResearchComplete{color:#8fe3ff;border-color:#245a68}
+  .b-NeedsReview{color:var(--warn);border-color:#6b5124}
+  .b-SocialOutreach{color:#ff9ecb;border-color:#6b2a4a}
+  .b-Duplicate{color:var(--muted)}
+  .b-Failed{color:var(--danger);border-color:#5a2a2a}
+  .b-Closed{color:var(--muted)}
+  button.btn{background:var(--accent);color:#fff;border:none;padding:11px 20px;border-radius:10px;
+    font-weight:650;cursor:pointer;font-size:14px}
+  button.btn:hover{filter:brightness(1.08)}
+  button.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  button.btn:disabled{opacity:.5;cursor:not-allowed}
+  .toggle{display:inline-flex;align-items:center;gap:8px;color:var(--muted);cursor:pointer;user-select:none}
+  .toggle input{width:16px;height:16px}
+  .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .muted{color:var(--muted)}
+  .log{background:#0a0d11;border:1px solid var(--line);border-radius:10px;padding:14px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;white-space:pre-wrap;
+    max-height:360px;overflow:auto;line-height:1.5}
+  .email-box{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:10px}
+  .email-box h4{margin:0 0 4px;font-size:13px;color:var(--accent)}
+  .email-box pre{white-space:pre-wrap;margin:6px 0 0;font-family:inherit;font-size:13px;line-height:1.55}
+  .hidden{display:none}
+  .hint{background:#1b2330;border:1px solid #2b3a52;border-radius:10px;padding:12px 14px;color:#bcd0f0;font-size:13px}
+  select{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  .spin{display:inline-block;width:12px;height:12px;border:2px solid var(--muted);border-top-color:var(--accent);
+    border-radius:50%;animation:s .8s linear infinite;vertical-align:-1px}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>AI Cold Outreach <span>Control Panel</span></h1>
+  <div id="cfgPill" class="status-pill">checking config…</div>
+</header>
+
+<nav>
+  <button data-tab="overview" class="active">Overview</button>
+  <button data-tab="leads">Leads</button>
+  <button data-tab="emails">Emails</button>
+  <button data-tab="activity">Activity</button>
+  <button data-tab="run">Run</button>
+</nav>
+
+<main>
+  <!-- OVERVIEW -->
+  <section id="tab-overview">
+    <div id="cfgWarn" class="hint hidden" style="margin-bottom:16px"></div>
+    <div class="grid metrics" id="metrics"></div>
+  </section>
+
+  <!-- LEADS -->
+  <section id="tab-leads" class="hidden">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:12px">
+        <strong>Leads</strong>
+        <input id="leadSearch" placeholder="Search company / email…"
+          style="background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 12px;width:260px" />
+      </div>
+      <div style="overflow:auto;max-height:60vh">
+        <table id="leadsTable"><thead><tr>
+          <th>ID</th><th>Company</th><th>Contact</th><th>Email</th><th>Status</th><th>Conf.</th><th></th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- EMAILS -->
+  <section id="tab-emails" class="hidden">
+    <div class="card">
+      <div class="row" style="margin-bottom:12px">
+        <strong>Email preview</strong>
+        <select id="emailLeadSelect"></select>
+        <span class="muted" id="emailHint">Pick a lead to preview its generated emails.</span>
+      </div>
+      <div id="emailPreview"></div>
+    </div>
+  </section>
+
+  <!-- ACTIVITY -->
+  <section id="tab-activity" class="hidden">
+    <div class="card">
+      <strong>Recent activity</strong>
+      <div style="overflow:auto;max-height:65vh;margin-top:12px">
+        <table id="activityTable"><thead><tr>
+          <th>Time</th><th>Lead</th><th>Company</th><th>Action</th><th>Result</th><th>Notes</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- RUN -->
+  <section id="tab-run" class="hidden">
+    <div class="card">
+      <strong>Run campaign</strong>
+      <p class="muted" style="margin:8px 0 16px">
+        Runs the full pipeline: research → generate → validate → send → update CRM → follow-ups.
+        Leave <em>Dry run</em> on to rehearse everything without sending real emails.
+      </p>
+      <div class="row" style="margin-bottom:16px">
+        <button id="runBtn" class="btn">▶ Run now</button>
+        <label class="toggle"><input type="checkbox" id="dryRun" checked /> Dry run (don't actually send)</label>
+        <span id="runState" class="muted"></span>
+      </div>
+      <div class="log" id="runLog">No run yet.</div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const api = (p, o) => fetch(p, o).then(r => r.json());
+let LEADS = [];
+
+// ── Tabs ──
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    ['overview','leads','emails','activity','run'].forEach(t=>
+      $('#tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
+    if(b.dataset.tab==='leads') loadLeads();
+    if(b.dataset.tab==='activity') loadActivity();
+    if(b.dataset.tab==='emails') loadEmailSelect();
+  };
+});
+
+// ── Config status ──
+async function loadConfig(){
+  const c = await api('/api/config-status');
+  const pill = $('#cfgPill'), warn = $('#cfgWarn');
+  if(c.ok){
+    pill.textContent = 'Config OK · '+c.provider; pill.className='status-pill ok';
+    warn.classList.add('hidden');
+  }else{
+    pill.textContent = 'Config incomplete'; pill.className='status-pill bad';
+    warn.classList.remove('hidden');
+    warn.innerHTML = '<strong>Finish setup to run:</strong><br>• '+c.problems.join('<br>• ');
+  }
+}
+
+// ── Metrics ──
+const METRIC_DEFS = [
+  ['total','Total Leads',''],['new','New','accent'],['sent','Emails Sent','green'],
+  ['replies','Replies','green'],['reply_rate','Reply Rate','green'],['meetings','Meetings','green'],
+  ['email_ready','Email Ready',''],['research_complete','Researched',''],['needs_review','Needs Review','warn'],
+  ['social','Social Outreach','warn'],['duplicate','Duplicates',''],['failed','Failed','danger'],
+  ['fu1_sent','Follow-up 1',''],['fu2_sent','Follow-up 2',''],['bounce_rate','Bounce Rate','danger'],
+  ['today',"Today",''],['week','This Week',''],['month','This Month',''],
+];
+async function loadMetrics(){
+  const r = await api('/api/metrics');
+  const box = $('#metrics');
+  if(!r.ok){ box.innerHTML = '<div class="hint">'+r.error+'</div>'; return; }
+  box.innerHTML = METRIC_DEFS.map(([k,label,cls])=>`
+    <div class="metric ${cls}"><div class="l">${label}</div>
+    <div class="n">${r.metrics[k] ?? 0}</div></div>`).join('');
+}
+
+// ── Leads ──
+function badge(s){ return `<span class="badge b-${(s||'').replace(/\s/g,'')}">${s||'—'}</span>`; }
+async function loadLeads(){
+  const r = await api('/api/leads');
+  const tb = $('#leadsTable tbody');
+  if(!r.ok){ tb.innerHTML=`<tr><td colspan="7"><div class="hint">${r.error}</div></td></tr>`; return; }
+  LEADS = r.leads;
+  renderLeads();
+}
+function renderLeads(){
+  const q = ($('#leadSearch').value||'').toLowerCase();
+  const tb = $('#leadsTable tbody');
+  const rows = LEADS.filter(l=>!q || (l.company+l.email+l.name).toLowerCase().includes(q));
+  tb.innerHTML = rows.map(l=>`<tr>
+    <td class="muted">${l.lead_id||''}</td><td>${l.company||''}</td>
+    <td>${l.name||''}</td><td class="muted">${l.email||''}</td>
+    <td>${badge(l.status)}</td><td>${l.confidence||''}</td>
+    <td><a href="#" onclick="previewLead('${l.lead_id}');return false">emails ↗</a></td>
+  </tr>`).join('') || `<tr><td colspan="7" class="muted">No leads yet. Import into the Leads tab.</td></tr>`;
+}
+$('#leadSearch').addEventListener('input', renderLeads);
+
+// ── Emails ──
+async function loadEmailSelect(){
+  if(!LEADS.length){ await loadLeads(); }
+  const sel = $('#emailLeadSelect');
+  sel.innerHTML = '<option value="">— choose lead —</option>' +
+    LEADS.map(l=>`<option value="${l.lead_id}">${l.company||l.lead_id}</option>`).join('');
+  sel.onchange = ()=> sel.value && previewLead(sel.value);
+}
+async function previewLead(id){
+  document.querySelector('nav button[data-tab="emails"]').click();
+  $('#emailLeadSelect').value = id;
+  const r = await api('/api/emails/'+id);
+  const box = $('#emailPreview');
+  if(!r.ok){ box.innerHTML=`<div class="hint">${r.error}</div>`; return; }
+  const e=r.emails, rs=r.research;
+  if(!e || !e['Subject']){ box.innerHTML='<div class="hint">No emails generated for this lead yet. Run the campaign first.</div>'; return; }
+  box.innerHTML = `
+    <div class="email-box"><h4>Research</h4>
+      <pre><b>Observation:</b> ${rs['Observation']||'—'}\n<b>Opportunity:</b> ${rs['Opportunity']||'—'}\n<b>Evidence:</b> ${rs['Personalization Evidence']||'—'}</pre></div>
+    <div class="email-box"><h4>Subject</h4><pre>${e['Subject']||''}</pre></div>
+    <div class="email-box"><h4>Email 1</h4><pre>${e['Email 1']||''}</pre></div>
+    <div class="email-box"><h4>Follow-up 1</h4><pre>${e['Follow-up 1']||''}</pre></div>
+    <div class="email-box"><h4>Follow-up 2</h4><pre>${e['Follow-up 2']||''}</pre></div>
+    <div class="muted" style="margin-top:8px">Validation: ${e['Validation']||'—'} · Words: ${e['Word Count']||'—'}</div>`;
+}
+
+// ── Activity ──
+async function loadActivity(){
+  const r = await api('/api/activity');
+  const tb = $('#activityTable tbody');
+  if(!r.ok){ tb.innerHTML=`<tr><td colspan="6"><div class="hint">${r.error}</div></td></tr>`; return; }
+  tb.innerHTML = r.activity.map(a=>`<tr>
+    <td class="muted">${a['Timestamp']||''}</td><td>${a['Lead']||''}</td><td>${a['Company']||''}</td>
+    <td>${a['Action']||''}</td><td>${a['Result']||''}</td><td class="muted">${a['Notes']||''}</td>
+  </tr>`).join('') || `<tr><td colspan="6" class="muted">No activity yet.</td></tr>`;
+}
+
+// ── Run ──
+$('#runBtn').onclick = async ()=>{
+  const dry = $('#dryRun').checked;
+  $('#runBtn').disabled = true;
+  const r = await api('/api/run', {method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({dry_run:dry})});
+  if(!r.ok){ $('#runState').innerHTML = '⚠ '+ (r.error||r.message); $('#runBtn').disabled=false; return; }
+  pollRun();
+};
+async function pollRun(){
+  const s = await api('/api/run/status');
+  const running = s.is_running;
+  $('#runBtn').disabled = running;
+  $('#runState').innerHTML = running
+    ? `<span class="spin"></span> running ${s.dry_run?'(dry run)':''}…`
+    : (s.state==='error' ? '⚠ '+s.message : (s.state==='done'?'✓ '+s.message:''));
+  $('#runLog').textContent = s.log_tail || 'Starting…';
+  $('#runLog').scrollTop = $('#runLog').scrollHeight;
+  if(running) setTimeout(pollRun, 2500);
+  else { loadMetrics(); }
+}
+
+// ── Boot + auto-refresh ──
+loadConfig(); loadMetrics();
+setInterval(()=>{ if(!$('#tab-overview').classList.contains('hidden')) loadMetrics(); }, 20000);
+setInterval(loadConfig, 60000);
+</script>
+</body>
+</html>

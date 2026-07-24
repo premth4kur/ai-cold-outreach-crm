@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Cold Outreach CRM — Live Dashboard</title>
+<meta name="description" content="A one-click AI outreach engine: research, personalized emails, follow-ups, and reply tracking — all driven from Google Sheets." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#070a12; --bg2:#0b1020; --glass:rgba(255,255,255,.045); --glass-b:rgba(255,255,255,.09);
+    --txt:#eef1ف7; --txt:#eef1f7; --muted:#93a0b5;
+    --a1:#6d8bff; --a2:#a06bff; --a3:#25e6b0; --warn:#ffc46b; --danger:#ff7a90;
+    --radius:20px;
+  }
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;overflow-x:hidden}
+  h1,h2,h3,.font-d{font-family:'Space Grotesk','Inter',sans-serif}
+  a{color:inherit;text-decoration:none}
+  /* animated gradient mesh background */
+  .mesh{position:fixed;inset:0;z-index:-2;background:
+     radial-gradient(50% 40% at 15% 10%,rgba(109,139,255,.28),transparent 60%),
+     radial-gradient(45% 45% at 85% 15%,rgba(160,107,255,.24),transparent 60%),
+     radial-gradient(50% 50% at 75% 90%,rgba(37,230,176,.18),transparent 60%),
+     radial-gradient(40% 40% at 10% 85%,rgba(255,122,144,.14),transparent 60%);
+     filter:blur(10px);animation:drift 18s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate3d(0,-16px,0) scale(1.05)}}
+  .grid-lines{position:fixed;inset:0;z-index:-1;opacity:.35;
+     background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),
+     linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;
+     -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000,transparent 75%)}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+  /* nav */
+  nav{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);
+     background:rgba(7,10,18,.6);border-bottom:1px solid var(--glass-b)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk';font-weight:700;font-size:16px}
+  .logo{width:30px;height:30px;border-radius:9px;background:conic-gradient(from 200deg,var(--a1),var(--a2),var(--a3),var(--a1));
+     box-shadow:0 0 22px rgba(109,139,255,.55)}
+  .nav-links{display:flex;gap:26px;color:var(--muted);font-size:14px;font-weight:500}
+  .nav-links a:hover{color:var(--txt)}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;font-weight:600;font-size:14px;
+     border:1px solid transparent;cursor:pointer;transition:.2s}
+  .btn.primary{background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;box-shadow:0 8px 30px rgba(120,110,255,.4)}
+  .btn.primary:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(120,110,255,.55)}
+  .btn.ghost{border-color:var(--glass-b);background:var(--glass);color:var(--txt)}
+  .btn.ghost:hover{border-color:var(--a1)}
+  /* hero */
+  header.hero{padding:86px 0 40px;text-align:center}
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 15px;border-radius:999px;font-size:12.5px;
+     border:1px solid var(--glass-b);background:var(--glass);color:var(--muted);margin-bottom:24px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--a3);box-shadow:0 0 10px var(--a3);animation:pulse 1.6s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  .hero h1{font-size:clamp(36px,6vw,66px);line-height:1.03;margin:0 0 18px;letter-spacing:-1.5px;font-weight:700}
+  .hero h1 .g{background:linear-gradient(120deg,var(--a1),var(--a2) 55%,var(--a3));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--muted);font-size:clamp(15px,2vw,19px);max-width:640px;margin:0 auto 30px;line-height:1.6}
+  .hero .cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  /* section */
+  section{padding:56px 0}
+  .eyebrow{color:var(--a1);font-weight:600;font-size:13px;letter-spacing:2px;text-transform:uppercase}
+  .sec-title{font-size:clamp(24px,3.4vw,36px);margin:8px 0 6px;letter-spacing:-.5px}
+  .sec-sub{color:var(--muted);max-width:560px}
+  /* dashboard */
+  .dash-head{display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:22px}
+  .live-tag{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+  .card{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--radius);padding:22px;position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.06),transparent 40%);pointer-events:none}
+  .card .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+  .card .v{font-family:'Space Grotesk';font-size:38px;font-weight:700;margin-top:10px;line-height:1}
+  .card .s{font-size:12.5px;color:var(--muted);margin-top:8px}
+  .card.g1 .v{background:linear-gradient(120deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .card.g2 .v{background:linear-gradient(120deg,var(--a3),#7ef);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .charts{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-top:16px}
+  @media(max-width:820px){.charts{grid-template-columns:1fr}}
+  .panel{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--radius);padding:22px}
+  .panel h3{margin:0 0 4px;font-size:16px}
+  .panel .muted{color:var(--muted);font-size:13px;margin-bottom:14px}
+  .feed{display:flex;flex-direction:column;gap:12px;max-height:280px;overflow:auto}
+  .feed .item{display:flex;gap:12px;align-items:flex-start;font-size:13.5px}
+  .feed .ic{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center;background:var(--glass-b)}
+  .feed .t{color:var(--muted);font-size:12px}
+  /* features */
+  .feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+  .feat .card:hover{transform:translateY(-4px);border-color:var(--a1);transition:.25s}
+  .feat .ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;
+     background:linear-gradient(135deg,rgba(109,139,255,.25),rgba(160,107,255,.2));border:1px solid var(--glass-b);margin-bottom:14px}
+  .feat h3{margin:0 0 8px;font-size:17px}
+  .feat p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
+  /* pipeline steps */
+  .flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin-top:20px}
+  .step{padding:10px 16px;border-radius:12px;background:var(--glass);border:1px solid var(--glass-b);font-size:13.5px;font-weight:500}
+  .arrow{color:var(--a1);font-size:18px}
+  footer{padding:40px 0;border-top:1px solid var(--glass-b);color:var(--muted);font-size:13px;text-align:center}
+  .banner{background:rgba(255,196,107,.08);border:1px solid rgba(255,196,107,.3);color:#ffdca0;
+     padding:10px 16px;border-radius:12px;font-size:13px;margin-bottom:18px;display:none}
+</style>
+</head>
+<body>
+<div class="mesh"></div><div class="grid-lines"></div>
+
+<nav><div class="wrap">
+  <div class="brand"><div class="logo"></div> Outreach<span style="color:var(--a1)">AI</span></div>
+  <div class="nav-links" style="display:flex">
+    <a href="#dashboard">Dashboard</a><a href="#features">Features</a><a href="#flow">How it works</a>
+  </div>
+  <a class="btn primary" href="https://cal.com/encesmarketing/15min" target="_blank">Book a call</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div class="pill"><span class="dot"></span> One-click AI outreach · powered by Google Sheets</div>
+  <h1>Turn a spreadsheet of leads<br>into <span class="g">personalized outreach</span>.</h1>
+  <p>Research every company, write genuinely personalized emails and two follow-ups,
+     send through your own inbox, and track replies — automatically, from one button.</p>
+  <div class="cta">
+    <a class="btn primary" href="#dashboard">View live dashboard →</a>
+    <a class="btn ghost" href="https://premthakurr.framer.media/" target="_blank">See portfolio</a>
+  </div>
+</div></header>
+
+<section id="dashboard"><div class="wrap">
+  <div class="dash-head">
+    <div>
+      <div class="eyebrow">Live metrics</div>
+      <h2 class="sec-title">Campaign dashboard</h2>
+    </div>
+    <div class="live-tag"><span class="dot"></span> <span id="dataSource">connecting…</span></div>
+  </div>
+  <div id="sampleBanner" class="banner">Showing sample data — publish your Google Sheet to make this live (see notes below).</div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="charts">
+    <div class="panel">
+      <h3>Pipeline</h3><div class="muted">Leads by stage</div>
+      <canvas id="funnel" height="150"></canvas>
+    </div>
+    <div class="panel">
+      <h3>Outcomes</h3><div class="muted">Sent vs replied vs meetings</div>
+      <canvas id="donut" height="150"></canvas>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <h3>Recent activity</h3><div class="muted">Latest actions from the engine</div>
+    <div class="feed" id="feed"></div>
+  </div>
+</div></section>
+
+<section id="features"><div class="wrap">
+  <div class="eyebrow">Built for reliability</div>
+  <h2 class="sec-title">Everything, handled</h2>
+  <p class="sec-sub" style="margin-bottom:26px">Modular Python engine with a hard validation gate before anything sends.</p>
+  <div class="feat">
+    <div class="card"><div class="ico">🔎</div><h3>Real research</h3><p>Visits each site, finds one genuine observation, and only uses officially published business emails — never guessed or scraped from third parties.</p></div>
+    <div class="card"><div class="ico">✍️</div><h3>Personalized copy</h3><p>Subject, email, and two follow-ups under 130 words each — grounded in the research, positioning you as a connected-brand-systems partner.</p></div>
+    <div class="card"><div class="ico">📤</div><h3>Your inbox</h3><p>Sends via your own Hostinger SMTP with human-like 4–10 minute gaps and full retry + logging. Replies detected over IMAP.</p></div>
+    <div class="card"><div class="ico">🔁</div><h3>Smart follow-ups</h3><p>Follow-up 1 at day 4, follow-up 2 at day 10 — automatically skipped the moment someone replies.</p></div>
+    <div class="card"><div class="ico">🛡️</div><h3>Never double-sends</h3><p>Status-driven and duplicate-safe. Every run resumes exactly where it left off — no restarts, no repeats.</p></div>
+    <div class="card"><div class="ico">📊</div><h3>Sheets as CRM</h3><p>Six tabs — Dashboard, Leads, Research, Emails, Campaign, Activity Log — updated live after every step.</p></div>
+  </div>
+</div></section>
+
+<section id="flow"><div class="wrap" style="text-align:center">
+  <div class="eyebrow">The pipeline</div>
+  <h2 class="sec-title">From new lead to booked call</h2>
+  <div class="flow">
+    <span class="step">New lead</span><span class="arrow">→</span>
+    <span class="step">Dedupe</span><span class="arrow">→</span>
+    <span class="step">Research</span><span class="arrow">→</span>
+    <span class="step">Generate + 2 follow-ups</span><span class="arrow">→</span>
+    <span class="step">Validate</span><span class="arrow">→</span>
+    <span class="step">Send</span><span class="arrow">→</span>
+    <span class="step">Update CRM</span><span class="arrow">→</span>
+    <span class="step">Track replies</span>
+  </div>
+  <div style="margin-top:34px"><a class="btn primary" href="https://cal.com/encesmarketing/15min" target="_blank">Book a 15-min call →</a></div>
+</div></section>
+
+<footer><div class="wrap">
+  Built by Prem · <a href="https://premthakurr.framer.media/" target="_blank" style="color:var(--a1)">Portfolio</a> ·
+  <a href="https://cal.com/encesmarketing/15min" target="_blank" style="color:var(--a1)">Book a call</a><br>
+  <span style="opacity:.6">The live control panel (send/run) runs privately on your own machine.</span>
+</div></footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   OPTIONAL LIVE DATA
+   To make this page show your REAL numbers:
+   1. In Google Sheets: File → Share → Publish to web (whole document).
+   2. Put your Sheet ID below. The page reads the Leads + Campaign +
+      Activity Log tabs via the public gviz endpoint (read-only).
+   Leave blank to display the polished sample data.
+   ═══════════════════════════════════════════════════════════════ */
+const SHEET_ID = "";   // e.g. "1AbC...xyz"
+
+const SAMPLE = {
+  metrics:{total:248,new:12,sent:181,replies:23,reply_rate:"12.7%",meetings:6,
+           research:198,email_ready:9,needs_review:14,social:21,failed:3,fu1:120,fu2:64},
+  pipeline:{Leads:248,Researched:198,"Email ready":9,Sent:181,Replied:23,Meetings:6},
+  outcomes:{Sent:181,Replied:23,Meetings:6},
+  feed:[
+    ["Send initial","Sent","Northwind Studio","2m ago","📤"],
+    ["Reply detected","Reply","Lumen Interiors","14m ago","💬"],
+    ["Research","Complete","Atlas Woodworks","31m ago","🔎"],
+    ["Send follow-up 1","Sent","Verde Cafe Group","1h ago","🔁"],
+    ["Validation","Passed","Harbor & Co","1h ago","✅"],
+    ["Email discovery","Social Outreach","Pixel Forge","2h ago","📱"],
+  ]
+};
+
+const CARD_DEFS = [
+  ["total","Total leads","g1",""],["sent","Emails sent","",""],
+  ["replies","Replies","g2",""],["reply_rate","Reply rate","g2",""],
+  ["meetings","Meetings booked","g2",""],["needs_review","Needs review","",""],
+];
+
+function renderCards(m){
+  document.getElementById('cards').innerHTML = CARD_DEFS.map(([k,label,cls])=>`
+    <div class="card ${cls}"><div class="k">${label}</div>
+    <div class="v" data-count="${m[k]??0}">${typeof m[k]==='string'?m[k]:'0'}</div></div>`).join('');
+  document.querySelectorAll('.v[data-count]').forEach(el=>{
+    const target=el.getAttribute('data-count');
+    if(isNaN(parseFloat(target))) return;
+    let n=0, end=parseFloat(target), step=Math.max(1,end/40);
+    const t=setInterval(()=>{n+=step; if(n>=end){n=end;clearInterval(t)} el.textContent=Math.round(n)},22);
+  });
+}
+
+let funnelChart, donutChart;
+function renderCharts(pipeline, outcomes){
+  const grid={color:'rgba(255,255,255,.06)'}, tick={color:'#93a0b5',font:{family:'Inter'}};
+  const g=document.getElementById('funnel').getContext('2d');
+  const grad=g.createLinearGradient(0,0,600,0); grad.addColorStop(0,'#6d8bff'); grad.addColorStop(1,'#a06bff');
+  funnelChart?.destroy();
+  funnelChart=new Chart(g,{type:'bar',data:{labels:Object.keys(pipeline),
+    datasets:[{data:Object.values(pipeline),backgroundColor:grad,borderRadius:8,barThickness:20}]},
+    options:{indexAxis:'y',plugins:{legend:{display:false}},
+      scales:{x:{grid,ticks:tick},y:{grid:{display:false},ticks:tick}}}});
+  const d=document.getElementById('donut').getContext('2d');
+  donutChart?.destroy();
+  donutChart=new Chart(d,{type:'doughnut',data:{labels:Object.keys(outcomes),
+    datasets:[{data:Object.values(outcomes),backgroundColor:['#6d8bff','#25e6b0','#a06bff'],borderWidth:0}]},
+    options:{cutout:'66%',plugins:{legend:{position:'bottom',labels:{color:'#93a0b5',padding:14}}}}});
+}
+
+function renderFeed(items){
+  document.getElementById('feed').innerHTML = items.map(([a,r,c,t,ic])=>`
+    <div class="item"><div class="ic">${ic||'•'}</div>
+    <div><div><b>${a}</b> · ${r} — <span style="color:var(--muted)">${c}</span></div>
+    <div class="t">${t}</div></div></div>`).join('');
+}
+
+function boot(data, live){
+  document.getElementById('dataSource').textContent = live ? 'Live from your sheet' : 'Live demo (sample data)';
+  if(!live) document.getElementById('sampleBanner').style.display='block';
+  renderCards(data.metrics); renderCharts(data.pipeline, data.outcomes); renderFeed(data.feed);
+}
+
+/* Try live data from a published sheet; fall back to sample. */
+async function gviz(tab){
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tab)}`;
+  const txt=await (await fetch(url)).text();
+  const json=JSON.parse(txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1));
+  const cols=json.table.cols.map(c=>c.label);
+  return json.table.rows.map(r=>{const o={};(r.c||[]).forEach((c,i)=>o[cols[i]]=c?c.v:'');return o});
+}
+async function loadLive(){
+  const yes=v=>['yes','true','1'].includes(String(v).toLowerCase().trim());
+  const leads=await gviz('Leads'), camp=await gviz('Campaign'), act=await gviz('Activity Log');
+  const st=s=>leads.filter(l=>String(l['Status']).trim()===s).length;
+  const sent=camp.filter(c=>yes(c['Email Sent'])).length;
+  const replies=camp.filter(c=>yes(c['Reply Received'])).length;
+  const meetings=camp.filter(c=>yes(c['Meeting Booked'])).length;
+  const data={
+    metrics:{total:leads.length,new:st('New'),sent,replies,
+      reply_rate:sent?((replies/sent*100).toFixed(1)+'%'):'0%',meetings,
+      needs_review:st('Needs Review'),social:st('Social Outreach'),
+      research:st('Research Complete'),email_ready:st('Email Ready'),failed:st('Failed'),
+      fu1:camp.filter(c=>yes(c['Follow-up 1 Sent'])).length,fu2:camp.filter(c=>yes(c['Follow-up 2 Sent'])).length},
+    pipeline:{Leads:leads.length,Researched:st('Research Complete'),"Email ready":st('Email Ready'),Sent:sent,Replied:replies,Meetings:meetings},
+    outcomes:{Sent:sent,Replied:replies,Meetings:meetings},
+    feed:act.slice(-8).reverse().map(a=>[a['Action']||'',a['Result']||'',a['Company']||'',a['Timestamp']||'','•'])
+  };
+  boot(data,true);
+}
+
+if(SHEET_ID){ loadLive().catch(()=>boot(SAMPLE,false)); } else { boot(SAMPLE,false); }
+</script>
+</body>
+</html>
