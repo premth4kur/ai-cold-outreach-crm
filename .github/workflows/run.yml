@@ -62,6 +62,7 @@ jobs:
           ANTHROPIC_MODEL=${{ secrets.ANTHROPIC_MODEL }}
           OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL=${{ secrets.OPENAI_MODEL }}
+          OPENAI_BASE_URL=${{ secrets.OPENAI_BASE_URL }}
           SMTP_HOST=smtp.hostinger.com
           SMTP_PORT=465
           SMTP_USE_SSL=true
