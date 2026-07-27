@@ -46,7 +46,14 @@ def validate_before_send(
     recipient_email: str,
     analysis: ResearchAnalysis,
     emails: GeneratedEmails,
+    require_grounding: bool = True,
 ) -> ValidationResult:
+    """
+    `require_grounding=True` (strict) enforces that a genuine observation and
+    personalization evidence exist. In auto-send mode it's set False, so the
+    email still ships as long as the hard gates pass (recipient, subject, links,
+    word count, no banned terms).
+    """
     failures: list[str] = []
     cap = settings.behaviour.max_email_words
     portfolio = settings.outreach.portfolio_url
@@ -56,11 +63,12 @@ def validate_before_send(
     if not recipient_email.strip():
         failures.append("No official recipient email.")
 
-    # 2. grounding
-    if not analysis.observation.strip():
-        failures.append("Missing genuine observation.")
-    if not analysis.personalization_evidence.strip():
-        failures.append("Missing personalization evidence.")
+    # 2. grounding (skipped in auto-send mode)
+    if require_grounding:
+        if not analysis.observation.strip():
+            failures.append("Missing genuine observation.")
+        if not analysis.personalization_evidence.strip():
+            failures.append("Missing personalization evidence.")
 
     # 3. subject
     if not emails.subject.strip():
