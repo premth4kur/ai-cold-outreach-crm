@@ -47,7 +47,11 @@ class AIClient:
             self._client = anthropic.Anthropic(api_key=settings.ai.anthropic_api_key)
         elif self._provider == "openai":
             import openai
-            self._client = openai.OpenAI(api_key=settings.ai.openai_api_key)
+            kwargs = {"api_key": settings.ai.openai_api_key}
+            # Point at a free OpenAI-compatible endpoint (Groq / Gemini) if set.
+            if settings.ai.openai_base_url:
+                kwargs["base_url"] = settings.ai.openai_base_url
+            self._client = openai.OpenAI(**kwargs)
         else:
             raise AIError(f"Unknown AI_PROVIDER: {self._provider!r}")
 
