@@ -187,6 +187,7 @@ class BehaviourConfig:
     research_confidence_threshold: float
     max_sends_per_run: int
     dry_run: bool
+    auto_send: bool  # True = send to every lead with an email, no "Needs Review" holds
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -297,6 +298,7 @@ def _build_settings() -> Settings:
             research_confidence_threshold=_get_float("RESEARCH_CONFIDENCE_THRESHOLD", 0.55),
             max_sends_per_run=_get_int("MAX_SENDS_PER_RUN", 25),
             dry_run=_get_bool("DRY_RUN", False),
+            auto_send=_get_bool("AUTO_SEND", True),
         ),
     )
 
