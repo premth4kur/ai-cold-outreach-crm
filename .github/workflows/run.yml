@@ -1,1 +1,89 @@
+# ═══════════════════════════════════════════════════════════════════
+#  Run the cold-outreach engine on GitHub's servers (no PC needed).
+#
+#  • Scheduled: every weekday at 10:00 IST (04:30 UTC).
+#  • Manual: Actions tab → "Outreach Engine" → Run workflow (choose dry-run).
+#
+#  ALL credentials come from repository secrets — never commit them.
+#  Add them under: Settings → Secrets and variables → Actions → New secret.
+#
+#  Required secrets:
+#    GOOGLE_SERVICE_ACCOUNT_JSON   (paste the ENTIRE service_account.json)
+#    GOOGLE_SHEET_ID
+#    AI_PROVIDER                   ("anthropic" or "openai")
+#    ANTHROPIC_API_KEY  + ANTHROPIC_MODEL     (if anthropic)
+#    OPENAI_API_KEY     + OPENAI_MODEL        (if openai)
+#    SMTP_USER  SMTP_PASSWORD  SENDER_EMAIL  SENDER_NAME
+#    IMAP_USER  IMAP_PASSWORD
+#  Optional secrets:
+#    MAX_SENDS_PER_RUN  (default 10 below)
+# ═══════════════════════════════════════════════════════════════════
 
+name: Outreach Engine
+
+on:
+  schedule:
+    - cron: "30 4 * * 1-5"      # 10:00 IST, Mon–Fri
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (rehearse, send nothing)?"
+        type: boolean
+        default: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write service account key
+        run: |
+          mkdir -p credentials
+          printf '%s' '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}' > credentials/service_account.json
+
+      - name: Build .env from secrets
+        env:
+          # scheduled runs send for real; manual runs honor the dry_run toggle
+          DRY_RUN_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+        run: |
+          cat > .env <<EOF
+          GOOGLE_SERVICE_ACCOUNT_FILE=credentials/service_account.json
+          GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }}
+          AI_PROVIDER=${{ secrets.AI_PROVIDER }}
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL=${{ secrets.ANTHROPIC_MODEL }}
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL=${{ secrets.OPENAI_MODEL }}
+          SMTP_HOST=smtp.hostinger.com
+          SMTP_PORT=465
+          SMTP_USE_SSL=true
+          SMTP_USER=${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+          SENDER_NAME=${{ secrets.SENDER_NAME }}
+          SENDER_EMAIL=${{ secrets.SENDER_EMAIL }}
+          IMAP_HOST=imap.hostinger.com
+          IMAP_PORT=993
+          IMAP_USER=${{ secrets.IMAP_USER }}
+          IMAP_PASSWORD=${{ secrets.IMAP_PASSWORD }}
+          IMAP_FOLDER=INBOX
+          PORTFOLIO_URL=https://premthakurr.framer.media/
+          BOOKING_URL=https://cal.com/encesmarketing/15min
+          MAX_SENDS_PER_RUN=${{ secrets.MAX_SENDS_PER_RUN || '10' }}
+          DELAY_MIN_MINUTES=1
+          DELAY_MAX_MINUTES=3
+          DRY_RUN=${DRY_RUN_INPUT}
+          EOF
+
+      - name: Ensure CRM tabs exist
+        run: python init_crm.py
+
+      - name: Run outreach pipeline
+        run: python main.py
