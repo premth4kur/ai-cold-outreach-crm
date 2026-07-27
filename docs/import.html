@@ -259,10 +259,29 @@ function maybeEnableImport(){
 $('#importBtn').onclick=async()=>{
   const sid=$('#sheetId').value.trim();
   $('#importBtn').disabled=true; $('#log').innerHTML='';
+  const LEADS_COLUMNS=['Lead ID','Added Date','Campaign','Import Batch','First Name','Last Name',
+    'Company','Website','Email','LinkedIn','Instagram','Industry','Segment','Country','Priority',
+    'Status','Confidence','Duplicate','Last Updated'];
   try{
+    logln('Checking sheet tabs…');
+    const meta=await api(`${sid}?fields=sheets.properties.title`);
+    const titles=(meta.sheets||[]).map(s=>s.properties.title);
+    if(!titles.includes('Leads')){
+      logln('Leads tab not found — creating it…');
+      await api(`${sid}:batchUpdate`,{method:'POST',
+        body:JSON.stringify({requests:[{addSheet:{properties:{title:'Leads'}}}]})});
+      await api(`${sid}/values/Leads!A1?valueInputOption=RAW`,{method:'PUT',
+        body:JSON.stringify({values:[LEADS_COLUMNS]})});
+      logln('✓ Created Leads tab with headers.','ok');
+    }
     logln('Reading Leads tab header…');
-    const header=(await api(`${sid}/values/Leads!1:1`)).values?.[0];
-    if(!header||!header.length) throw new Error('Leads tab or header row not found. Run the workflow once (init_crm) so tabs exist.');
+    let header=(await api(`${sid}/values/Leads!1:1`)).values?.[0];
+    if(!header||!header.length){
+      logln('Header row empty — writing column headers…');
+      await api(`${sid}/values/Leads!A1?valueInputOption=RAW`,{method:'PUT',
+        body:JSON.stringify({values:[LEADS_COLUMNS]})});
+      header=LEADS_COLUMNS.slice();
+    }
     const idx={}; header.forEach((h,i)=>idx[h]=i);
 
     logln('Loading existing leads for de-dupe…');
