@@ -109,6 +109,11 @@ class AIConfig:
     anthropic_model: str
     openai_api_key: str
     openai_model: str
+    # Optional OpenAI-compatible endpoint. Set this to use a free provider such
+    # as Groq ("https://api.groq.com/openai/v1") or Google Gemini
+    # ("https://generativelanguage.googleapis.com/v1beta/openai/"). Leave blank
+    # for real OpenAI.
+    openai_base_url: str = ""
 
     @property
     def active_key(self) -> str:
@@ -264,6 +269,7 @@ def _build_settings() -> Settings:
             anthropic_model=_get("ANTHROPIC_MODEL", "claude-sonnet-4-20250514"),
             openai_api_key=_get("OPENAI_API_KEY"),
             openai_model=_get("OPENAI_MODEL", "gpt-4o"),
+            openai_base_url=_get("OPENAI_BASE_URL", ""),
         ),
         smtp=SMTPConfig(
             host=_get("SMTP_HOST", "smtp.hostinger.com"),
