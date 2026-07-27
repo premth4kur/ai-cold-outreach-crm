@@ -275,6 +275,15 @@ class Orchestrator:
         res = self.smtp.send(to_email=recipient, subject=emails.subject, body=emails.email_1)
         smtp_log(f"[{lead_id}] initial -> {recipient}: {res.smtp_status} {res.error}")
 
+        # Dry run is a non-destructive rehearsal: everything is prepared and the
+        # draft is validated, but the lead is left as New so a later REAL run
+        # actually sends it. Nothing is marked Sent.
+        if res.dry_run:
+            self.sheets.log_activity(lead_id, company, "Send initial", "Dry run", f"would send to {recipient}")
+            self.sheets.set_lead_status(lead.row_number, LeadStatus.NEW)
+            log.info("  → DRY RUN: would send to %s (left as New)", recipient)
+            return
+
         campaign = {
             "Company": company,
             "Email": recipient,
