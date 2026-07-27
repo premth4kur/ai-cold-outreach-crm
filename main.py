@@ -178,11 +178,12 @@ class Orchestrator:
             return
         dup_index.add(lead.email, company, lead.website)
 
-        # 3. Needs a website to research.
+        # 3. A website is where we research + discover the official email.
         if not lead.website:
-            self.sheets.set_lead_status(lead.row_number, LeadStatus.NEEDS_REVIEW)
+            hold = LeadStatus.SOCIAL_OUTREACH if settings.behaviour.auto_send else LeadStatus.NEEDS_REVIEW
+            self.sheets.set_lead_status(lead.row_number, hold)
             self.sheets.log_activity(lead_id, company, "Research", "Skipped", "No website")
-            log.info("  → no website, needs review.")
+            log.info("  → no website (%s).", hold.value)
             return
 
         # 4. Research the site.
@@ -193,9 +194,10 @@ class Orchestrator:
                 "Research Timestamp": evidence.timestamp, "Research Confidence": evidence.confidence,
                 "Personalization Evidence": evidence.error,
             })
-            self.sheets.set_lead_status(lead.row_number, LeadStatus.NEEDS_REVIEW, Confidence=evidence.confidence)
+            hold = LeadStatus.SOCIAL_OUTREACH if settings.behaviour.auto_send else LeadStatus.NEEDS_REVIEW
+            self.sheets.set_lead_status(lead.row_number, hold, Confidence=evidence.confidence)
             self.sheets.log_activity(lead_id, company, "Research", "Unreachable", evidence.error)
-            log.info("  → website unreachable, needs review.")
+            log.info("  → website unreachable (%s).", hold.value)
             return
 
         # 5. Decide recipient email (official only). Prefer an imported address,
@@ -225,7 +227,10 @@ class Orchestrator:
 
         threshold = settings.behaviour.research_confidence_threshold
         combined_conf = round(min(evidence.confidence, max(analysis.model_confidence, 0.0)), 2)
-        if analysis.model_confidence < 0.5 or evidence.confidence < threshold or not analysis.observation:
+        low = (analysis.model_confidence < 0.5 or evidence.confidence < threshold or not analysis.observation)
+        # In auto-send mode we never park low-confidence leads for review — the AI
+        # writes the best email it can from whatever it found and proceeds to send.
+        if low and not settings.behaviour.auto_send:
             self.sheets.set_lead_status(lead.row_number, LeadStatus.NEEDS_REVIEW, Confidence=combined_conf)
             self.sheets.log_activity(lead_id, company, "Research", "Low confidence", analysis.note or "below threshold")
             log.info("  → low research confidence (%.2f), needs review.", combined_conf)
@@ -246,11 +251,15 @@ class Orchestrator:
             "Validation": "Pending",
         })
 
-        # 8. Validate.
-        result = validate_before_send(recipient_email=recipient, analysis=analysis, emails=emails)
+        # 8. Validate. In auto-send mode we relax the "must have a grounded
+        #    observation" checks (the AI still writes a real email), but keep the
+        #    hard gates: recipient, subject, links, word count, no banned terms.
+        result = validate_before_send(recipient_email=recipient, analysis=analysis, emails=emails,
+                                      require_grounding=not settings.behaviour.auto_send)
         if not result.ok:
             self.sheets.upsert_by_lead_id(Tab.EMAILS, lead_id, {"Validation": f"FAILED: {result.reason()}"})
-            self.sheets.set_lead_status(lead.row_number, LeadStatus.NEEDS_REVIEW)
+            hold = LeadStatus.FAILED if settings.behaviour.auto_send else LeadStatus.NEEDS_REVIEW
+            self.sheets.set_lead_status(lead.row_number, hold)
             self.sheets.log_activity(lead_id, company, "Validation", "Failed", result.reason())
             log.info("  → validation failed: %s", result.reason())
             return
