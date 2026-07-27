@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ences Outreach — Recipients</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{--bg:#090909;--bg2:#141414;--glass:rgba(255,255,255,.05);--glass-b:rgba(255,255,255,.10);
+    --txt:#f4f6f0;--muted:#9a9a90;--a1:#b4e925;--a2:#8fd000;--a3:#d7ff6b;--warn:#ffc24b;--danger:#ff5d73;--radius:16px}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+  .mesh{position:fixed;inset:0;z-index:-1;background:
+     radial-gradient(50% 40% at 12% 8%,rgba(180,233,37,.18),transparent 60%),
+     radial-gradient(45% 45% at 88% 12%,rgba(143,208,0,.14),transparent 60%);filter:blur(12px)}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px 20px 70px}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk';font-weight:700}
+  .nav a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;margin-left:16px}
+  .nav a:hover{color:var(--txt)} a{color:var(--a1)}
+  h1{font-family:'Space Grotesk';font-size:26px;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 20px;font-size:14px;line-height:1.6}
+  .card{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+  label{display:block;font-size:12.5px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  input[type=text],input[type=password]{width:100%;background:var(--bg2);color:var(--txt);border:1px solid var(--glass-b);
+     border-radius:10px;padding:11px 13px;font-size:14px;margin-bottom:12px}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:11px;font-weight:600;font-size:14px;
+     border:1px solid transparent;cursor:pointer;transition:.2s;text-decoration:none}
+  .btn.primary{background:linear-gradient(135deg,var(--a1),var(--a2));color:#0d0d0d;box-shadow:0 8px 26px rgba(180,233,37,.32)}
+  .btn.primary:hover{transform:translateY(-2px)} .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .btn.ghost{border-color:var(--glass-b);background:var(--glass);color:var(--txt)}
+  .pill{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--glass-b);color:var(--muted)}
+  .pill.on{color:var(--a1);border-color:#3d5c14}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px}
+  .metric{background:var(--glass);border:1px solid var(--glass-b);border-radius:14px;padding:15px}
+  .metric .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .metric .v{font-family:'Space Grotesk';font-size:26px;font-weight:700;margin-top:6px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0}
+  .chip{padding:7px 13px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--muted);font-size:12.5px;cursor:pointer;font-weight:550}
+  .chip.active{color:var(--txt);border-color:var(--a1);background:rgba(180,233,37,.16)}
+  .tablewrap{overflow:auto;border:1px solid var(--glass-b);border-radius:var(--radius);max-height:60vh}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:760px}
+  th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--glass-b);white-space:nowrap}
+  th{color:var(--muted);font-weight:600;background:var(--bg2);position:sticky;top:0}
+  .tag{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:600}
+  .t-New{color:#9ecbff;background:rgba(90,150,255,.14)} .t-Sent{color:var(--a1);background:rgba(180,233,37,.14)}
+  .t-EmailReady{color:#d7ff6b;background:rgba(143,208,0,.16)} .t-ResearchComplete{color:#8fe3ff;background:rgba(36,90,104,.3)}
+  .t-NeedsReview{color:var(--warn);background:rgba(255,194,75,.14)} .t-SocialOutreach{color:#ff9ecb;background:rgba(107,42,74,.3)}
+  .t-Duplicate{color:var(--muted)} .t-Failed{color:var(--danger);background:rgba(255,93,115,.14)} .t-Closed{color:var(--muted)}
+  .yes{color:var(--a1)} .no{color:#5a6072}
+  .log{background:#0a0a10;border:1px solid var(--glass-b);border-radius:10px;padding:13px;font-size:12.5px;
+     font-family:ui-monospace,monospace;white-space:pre-wrap;max-height:200px;overflow:auto;margin-top:12px}
+  .hide{display:none} .muted{color:var(--muted)} .ok{color:var(--a1)} .err{color:var(--danger)}
+  .warnbox{background:rgba(255,194,75,.08);border:1px solid rgba(255,194,75,.3);color:#ffdca0;padding:11px 14px;border-radius:10px;font-size:13px;margin-top:10px}
+  details summary{cursor:pointer;color:var(--a1);font-size:13px;margin-top:8px}
+  code{background:var(--bg2);padding:2px 6px;border-radius:5px;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="mesh"></div>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><img src="https://encesmarketing.com/wp-content/uploads/2025/06/Ences-Lgoo_ences-name-only-white.png" alt="Ences" style="height:22px"> <span style="color:var(--a1)">Outreach</span></div>
+    <div class="nav"><a href="./">Dashboard</a><a href="./import.html">Import</a><a href="./leads.html">Recipients</a></div>
+  </div>
+
+  <h1>Recipients</h1>
+  <p class="sub">Every imported lead, live from your Google Sheet. See who's queued, who's been emailed, and who replied —
+     then launch the outreach engine to send.</p>
+
+  <!-- Connect -->
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div style="flex:1;min-width:220px">
+        <label>Google OAuth Client ID</label>
+        <input type="text" id="clientId" placeholder="xxxx.apps.googleusercontent.com" />
+        <label>Google Sheet ID</label>
+        <input type="text" id="sheetId" placeholder="from your sheet URL" />
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="signBtn">Sign in with Google</button>
+      <button class="btn ghost" id="refreshBtn" disabled>Refresh</button>
+      <span class="pill" id="authState">not connected</span>
+    </div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="cards" id="metrics"></div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <strong>Leads</strong>
+      <input type="text" id="search" placeholder="Search company / email…" style="width:240px;margin:0" />
+    </div>
+    <div class="toolbar" id="filters">
+      <span class="chip active" data-f="all">All</span>
+      <span class="chip" data-f="New">New</span>
+      <span class="chip" data-f="Sent">Sent</span>
+      <span class="chip" data-f="Needs Review">Needs Review</span>
+      <span class="chip" data-f="Social Outreach">Social</span>
+    </div>
+    <div class="tablewrap">
+      <table id="tbl"><thead><tr>
+        <th>Company</th><th>Contact</th><th>Email</th><th>Status</th><th>Sent</th><th>Replied</th><th>Meeting</th>
+      </tr></thead><tbody><tr><td colspan="7" class="muted" style="text-align:center;padding:24px">Sign in to load your leads.</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- Send -->
+  <div class="card">
+    <strong>Send outreach</strong>
+    <p class="sub" style="margin:8px 0 12px">Sending runs on the engine (GitHub Actions), which researches each lead, finds the
+       official email, writes the copy, and sends via your Hostinger inbox. Launch it here.</p>
+    <label>GitHub token <span class="muted">(fine-grained PAT with “Actions: read and write” — optional; lets you launch from here)</span></label>
+    <input type="password" id="ghToken" placeholder="github_pat_… (stored only in this browser)" />
+    <div class="row">
+      <label style="display:flex;align-items:center;gap:8px;color:var(--muted);margin:0"><input type="checkbox" id="dryRun" checked style="width:16px;height:16px"> Dry run (rehearse, send nothing)</label>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary" id="sendBtn">▶ Launch campaign</button>
+      <a class="btn ghost" href="https://github.com/premth4kur/ai-cold-outreach-crm/actions/workflows/run.yml" target="_blank">Open Actions ↗</a>
+    </div>
+    <div class="log hide" id="sendLog"></div>
+    <div class="warnbox">Uncheck “Dry run” only when you’re ready to send real emails. Deliverability tip: keep volume low at first.</div>
+    <details><summary>How to create the GitHub token</summary>
+      <p class="sub" style="margin-top:8px">GitHub → <a href="https://github.com/settings/personal-access-tokens" target="_blank">Settings → Developer settings → Fine-grained tokens</a> →
+      Generate. Resource owner: you. Repository access: only <code>ai-cold-outreach-crm</code>. Permissions → Repository →
+      <b>Actions: Read and write</b> and <b>Contents: Read</b>. Copy the <code>github_pat_…</code> token here. It's stored only in your browser.</p>
+    </details>
+  </div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const REPO_OWNER='premth4kur', REPO_NAME='ai-cold-outreach-crm', WORKFLOW='run.yml';
+['clientId','sheetId','ghToken'].forEach(k=>{
+  const el=$('#'+k); el.value=localStorage.getItem('imp_'+k)||'';
+  el.addEventListener('input',()=>localStorage.setItem('imp_'+k,el.value.trim()));
+});
+
+/* ── OAuth ── */
+let accessToken=null,tokenClient=null;
+$('#signBtn').onclick=()=>{
+  const cid=$('#clientId').value.trim(); if(!cid){alert('Enter your OAuth Client ID first.');return;}
+  tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/spreadsheets.readonly',
+    callback:r=>{ if(r.error){setAuth(false,r.error);return;} accessToken=r.access_token; setAuth(true); $('#refreshBtn').disabled=false; loadLeads(); }});
+  tokenClient.requestAccessToken({prompt:''});
+};
+$('#refreshBtn').onclick=()=>loadLeads();
+function setAuth(ok,msg){const p=$('#authState');p.textContent=ok?'connected':(msg||'not connected');p.className='pill'+(ok?' on':'');}
+
+/* ── Sheets read ── */
+async function sget(range){
+  const sid=$('#sheetId').value.trim();
+  const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/${encodeURIComponent(range)}`,
+    {headers:{Authorization:'Bearer '+accessToken}});
+  if(!r.ok)throw new Error('Sheets '+r.status+': '+(await r.text()));
+  return (await r.json()).values||[];
+}
+function rowsToObjs(vals){const h=vals[0]||[];return vals.slice(1).map(r=>{const o={};h.forEach((k,i)=>o[k]=r[i]||'');return o});}
+const yes=v=>['yes','true','1'].includes(String(v).toLowerCase().trim());
+
+let LEADS=[],FILTER='all';
+async function loadLeads(){
+  try{
+    const leads=rowsToObjs(await sget('Leads'));
+    let camp=[]; try{camp=rowsToObjs(await sget('Campaign'));}catch(e){}
+    const byId={}; camp.forEach(c=>byId[String(c['Lead ID']).trim()]=c);
+    LEADS=leads.map(l=>{
+      const c=byId[String(l['Lead ID']).trim()]||{};
+      return {company:l['Company']||'',name:((l['First Name']||'')+' '+(l['Last Name']||'')).trim(),
+        email:c['Email']||l['Email']||'', status:l['Status']||'New',
+        sent:yes(c['Email Sent']),replied:yes(c['Reply Received']),meeting:yes(c['Meeting Booked'])};
+    });
+    renderMetrics(); render();
+  }catch(err){
+    $('#tbl').querySelector('tbody').innerHTML=`<tr><td colspan="7" class="err" style="padding:20px">${err.message.includes('Unable to parse range')?'No Leads tab yet — import some leads first.':err.message}</td></tr>`;
+  }
+}
+function renderMetrics(){
+  const n=s=>LEADS.filter(l=>l.status===s).length;
+  const m=[['Total',LEADS.length],['New',n('New')],['Sent',LEADS.filter(l=>l.sent).length],
+    ['Replied',LEADS.filter(l=>l.replied).length],['Meetings',LEADS.filter(l=>l.meeting).length],
+    ['Needs review',n('Needs Review')],['Social',n('Social Outreach')]];
+  $('#metrics').innerHTML=m.map(([k,v])=>`<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+}
+function render(){
+  const q=($('#search').value||'').toLowerCase();
+  const rows=LEADS.filter(l=>(FILTER==='all'||l.status===FILTER)&&(!q||(l.company+l.email+l.name).toLowerCase().includes(q)));
+  const tb=$('#tbl').querySelector('tbody');
+  tb.innerHTML=rows.map(l=>`<tr>
+    <td><b>${l.company||'—'}</b></td><td>${l.name||'<span class=muted>—</span>'}</td>
+    <td class="muted">${l.email||'<span class=no>discovered at send</span>'}</td>
+    <td><span class="tag t-${l.status.replace(/\s/g,'')}">${l.status}</span></td>
+    <td>${l.sent?'<span class=yes>✓</span>':'<span class=no>—</span>'}</td>
+    <td>${l.replied?'<span class=yes>✓</span>':'<span class=no>—</span>'}</td>
+    <td>${l.meeting?'<span class=yes>✓</span>':'<span class=no>—</span>'}</td></tr>`).join('')
+    || `<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">No leads match.</td></tr>`;
+}
+$('#search').addEventListener('input',render);
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');FILTER=c.dataset.f;render();});
+
+/* ── Launch campaign (workflow dispatch) ── */
+function slog(m,cls){const l=$('#sendLog');l.classList.remove('hide');l.innerHTML+=(cls?`<span class="${cls}">${m}</span>`:m)+'\n';}
+$('#sendBtn').onclick=async()=>{
+  const token=$('#ghToken').value.trim();
+  const dry=$('#dryRun').checked;
+  $('#sendLog').innerHTML='';
+  if(!token){
+    slog('No GitHub token set — opening the Actions page so you can click “Run workflow”.','');
+    window.open('https://github.com/'+REPO_OWNER+'/'+REPO_NAME+'/actions/workflows/'+WORKFLOW,'_blank');
+    return;
+  }
+  if(!dry && !confirm('Send REAL emails now? This launches the live campaign.')) return;
+  try{
+    slog(`Dispatching workflow (dry_run=${dry})…`);
+    const r=await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW}/dispatches`,{
+      method:'POST',headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},
+      body:JSON.stringify({ref:'main',inputs:{dry_run:String(dry)}})});
+    if(r.status===204){slog('✓ Campaign launched. Track progress in the Actions tab.','ok');
+      window.open('https://github.com/'+REPO_OWNER+'/'+REPO_NAME+'/actions','_blank');}
+    else{slog('✕ GitHub '+r.status+': '+(await r.text()),'err');}
+  }catch(err){slog('✕ '+err.message,'err');}
+};
+</script>
+</body>
+</html>

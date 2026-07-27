@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
     /* Ences brand: near-black base, white wordmark, signature lime-green accent */
@@ -123,8 +124,9 @@
   <div class="nav-links">
     <a data-view="dashboard" class="active">Dashboard</a>
     <a data-view="emails">Emails</a>
+    <a href="./leads.html">Recipients</a>
+    <a href="./import.html">Import</a>
     <a data-view="features">Features</a>
-    <a data-view="flow">How it works</a>
   </div>
   <a class="btn primary" href="https://cal.com/encesmarketing/15min" target="_blank">Book a call</a>
 </div></nav>
@@ -144,9 +146,10 @@
 <section id="v-dashboard" class="view active"><div class="wrap">
   <div class="head-row">
     <div><div class="eyebrow">Overview</div><h2 class="sec-title">Campaign dashboard</h2></div>
-    <div class="live-tag"><span class="dot"></span> <span id="dataSource">connecting…</span></div>
+    <div class="live-tag"><span class="dot"></span> <span id="dataSource">not connected</span>
+      <button class="btn ghost" id="connectBtn" style="padding:7px 14px;font-size:13px;margin-left:6px">Connect Google</button></div>
   </div>
-  <div id="sampleBanner" class="banner">Showing sample data — publish your Google Sheet to go live (see notes at page bottom).</div>
+  <div id="sampleBanner" class="banner">Not connected. Click <b>Connect Google</b> to load your live campaign data. First time? Set your Client ID + Sheet ID on the <a href="./import.html" style="color:#ffdca0;text-decoration:underline">Import page</a>.</div>
   <div class="cards" id="cards"></div>
   <div class="charts">
     <div class="panel"><h3>Pipeline</h3><div class="muted">Leads by stage</div><canvas id="funnel" height="150"></canvas></div>
@@ -217,35 +220,15 @@
 </div></footer>
 
 <script>
-/* ═══ OPTIONAL LIVE DATA ═══
-   Publish your Google Sheet (File → Share → Publish to web) and paste the Sheet ID below.
-   The page reads Leads, Campaign, Emails, and Activity Log tabs (read-only). Blank = sample data.
-   Bounce tracking: add a "Bounced" (Yes/No) column to your Campaign tab; the engine can fill it. */
-const SHEET_ID = "";
-
-const SAMPLE = {
-  metrics:{total:248,new:12,research:198,email_ready:9,sent:181,delivered:171,bounced:10,
-           replies:23,reply_rate:"12.7%",bounce_rate:"5.5%",delivered_rate:"94.5%",meetings:6,needs_review:14,social:21,failed:3},
-  pipeline:{Leads:248,Researched:198,"Email ready":9,Sent:181,Replied:23,Meetings:6},
-  deliver:{Delivered:171,Bounced:10,Replied:23},
-  feed:[
-    ["Send initial","Delivered","Northwind Studio","2m ago","📤"],
-    ["Reply detected","Reply","Lumen Interiors","14m ago","💬"],
-    ["Bounce detected","Bounced","Ghost Retail","28m ago","⚠️"],
-    ["Research","Complete","Atlas Woodworks","31m ago","🔎"],
-    ["Send follow-up 1","Delivered","Verde Cafe Group","1h ago","🔁"],
-    ["Meeting booked","Meeting","Harbor & Co","2h ago","📅"],
-  ],
-  emails:[
-    ["Northwind Studio","hello@northwind.co","A quick note on your booking flow","replied",1,1,0,1,1,0,0],
-    ["Lumen Interiors","studio@lumen.design","Your portfolio page + one idea","replied",1,1,0,1,1,1,0],
-    ["Harbor & Co","team@harborco.com","Loved your rebrand — one gap","meeting",1,1,0,1,1,0,1],
-    ["Atlas Woodworks","info@atlaswood.com","Your craftsmanship deserves better UX","delivered",1,1,0,0,1,0,0],
-    ["Verde Cafe Group","hi@verdecafe.com","Menu → mobile experience","delivered",1,1,0,0,1,1,0],
-    ["Ghost Retail","contact@ghostretail.io","A small thing on your homepage","bounced",1,0,1,0,0,0,0],
-    ["Pixel Forge","hello@pixelforge.studio","Your visual system is close","delivered",1,1,0,0,0,0,0],
-    ["Maple & Stone","care@mapleandstone.com","One idea for your store page","delivered",1,1,0,0,1,0,0],
-  ]
+/* ═══ LIVE DATA (Google sign-in) ═══
+   Reads your CRM sheet directly with your own Google login — no publishing, no demo data.
+   Uses the Client ID + Sheet ID you saved on the Import/Recipients pages. */
+const EMPTY = {
+  metrics:{total:0,new:0,research:0,email_ready:0,sent:0,delivered:0,bounced:0,
+           replies:0,reply_rate:"0%",bounce_rate:"0%",delivered_rate:"0%",meetings:0,needs_review:0,social:0,failed:0},
+  pipeline:{Leads:0,Researched:0,"Email ready":0,Sent:0,Replied:0,Meetings:0},
+  deliver:{Delivered:0,Bounced:0,Replied:0},
+  feed:[], emails:[]
 };
 
 /* ── view routing ── */
@@ -335,53 +318,64 @@ document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
 });
 
 /* ── boot ── */
-function boot(d,live){
-  document.getElementById('dataSource').textContent=live?'Live from your sheet':'Live demo (sample data)';
-  document.getElementById('emailSource').textContent=live?'Live from your sheet':'Sample data';
-  if(!live)document.getElementById('sampleBanner').style.display='block';
+function boot(d,connected){
+  document.getElementById('dataSource').textContent=connected?'Live from your sheet':'not connected';
+  document.getElementById('emailSource').textContent=connected?'Live from your sheet':'not connected';
+  document.getElementById('sampleBanner').style.display=connected?'none':'block';
   renderCards(d.metrics);renderEmailCards(d.metrics);renderCharts(d.pipeline,d.deliver);renderFeed(d.feed);
   EMAILS=d.emails;renderEmailTable();
 }
+boot(EMPTY,false);
 
-/* ── live loader (published sheet via gviz) ── */
-async function gviz(tab){
-  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tab)}`;
-  const txt=await(await fetch(url)).text();
-  const j=JSON.parse(txt.substring(txt.indexOf('{'),txt.lastIndexOf('}')+1));
-  const cols=j.table.cols.map(c=>c.label);
-  return j.table.rows.map(r=>{const o={};(r.c||[]).forEach((c,i)=>o[cols[i]]=c?c.v:'');return o});
+/* ── live loader (Google OAuth → Sheets API, no demo data) ── */
+let accessToken=null;
+const CLIENT_ID=()=>localStorage.getItem('imp_clientId')||'';
+const SHEET_ID=()=>localStorage.getItem('imp_sheetId')||'';
+document.getElementById('connectBtn').onclick=()=>{
+  if(!CLIENT_ID()||!SHEET_ID()){ alert('First set your OAuth Client ID and Sheet ID on the Import page.'); location.href='./import.html'; return; }
+  const tc=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID(),scope:'https://www.googleapis.com/auth/spreadsheets.readonly',
+    callback:r=>{ if(r.error){document.getElementById('dataSource').textContent='sign-in failed';return;} accessToken=r.access_token; loadLive(); }});
+  tc.requestAccessToken({prompt:''});
+};
+async function sget(tab){
+  const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID()}/values/${encodeURIComponent(tab)}`,
+    {headers:{Authorization:'Bearer '+accessToken}});
+  if(!r.ok){ const t=await r.text(); if(t.includes('Unable to parse range')) return []; throw new Error('Sheets '+r.status); }
+  const vals=(await r.json()).values||[]; const h=vals[0]||[];
+  return vals.slice(1).map(row=>{const o={};h.forEach((k,i)=>o[k]=row[i]||'');return o});
 }
 async function loadLive(){
+  document.getElementById('dataSource').textContent='loading…';
   const yes=v=>['yes','true','1'].includes(String(v).toLowerCase().trim());
-  const leads=await gviz('Leads'),camp=await gviz('Campaign'),emails=await gviz('Emails'),act=await gviz('Activity Log');
-  const st=s=>leads.filter(l=>String(l['Status']).trim()===s).length;
-  const sent=camp.filter(c=>yes(c['Email Sent'])).length;
-  const bounced=camp.filter(c=>yes(c['Bounced'])).length;
-  const replies=camp.filter(c=>yes(c['Reply Received'])).length;
-  const meetings=camp.filter(c=>yes(c['Meeting Booked'])).length;
-  const delivered=Math.max(sent-bounced,0);
-  const byId={};camp.forEach(c=>byId[String(c['Lead ID']).trim()]=c);
-  const rows=emails.map(e=>{
-    const c=byId[String(e['Lead ID']).trim()]||{};
-    const sv=yes(c['Email Sent']),bv=yes(c['Bounced']),rv=yes(c['Reply Received']),mv=yes(c['Meeting Booked']);
-    const status=bv?'bounced':mv?'meeting':rv?'replied':sv?'delivered':'sent';
-    return [e['Company']||c['Company']||'',c['Email']||e['Email']||'',e['Subject']||'',status,
-      sv?1:0,(sv&&!bv)?1:0,bv?1:0,rv?1:0,yes(c['Follow-up 1 Sent'])?1:0,yes(c['Follow-up 2 Sent'])?1:0,mv?1:0];
-  });
-  const data={
-    metrics:{total:leads.length,new:st('New'),research:st('Research Complete'),email_ready:st('Email Ready'),
-      sent,delivered,bounced,replies,meetings,needs_review:st('Needs Review'),social:st('Social Outreach'),failed:st('Failed'),
-      reply_rate:sent?((replies/sent*100).toFixed(1)+'%'):'0%',
-      bounce_rate:sent?((bounced/sent*100).toFixed(1)+'%'):'0%',
-      delivered_rate:sent?((delivered/sent*100).toFixed(1)+'%'):'0%'},
-    pipeline:{Leads:leads.length,Researched:st('Research Complete'),"Email ready":st('Email Ready'),Sent:sent,Replied:replies,Meetings:meetings},
-    deliver:{Delivered:delivered,Bounced:bounced,Replied:replies},
-    feed:act.slice(-8).reverse().map(a=>[a['Action']||'',a['Result']||'',a['Company']||'',a['Timestamp']||'','•']),
-    emails:rows
-  };
-  boot(data,true);
+  try{
+    const leads=await sget('Leads'), camp=await sget('Campaign'), emails=await sget('Emails'), act=await sget('Activity Log');
+    const st=s=>leads.filter(l=>String(l['Status']).trim()===s).length;
+    const sent=camp.filter(c=>yes(c['Email Sent'])).length;
+    const bounced=camp.filter(c=>yes(c['Bounced'])).length;
+    const replies=camp.filter(c=>yes(c['Reply Received'])).length;
+    const meetings=camp.filter(c=>yes(c['Meeting Booked'])).length;
+    const delivered=Math.max(sent-bounced,0);
+    const byId={};camp.forEach(c=>byId[String(c['Lead ID']).trim()]=c);
+    const rows=emails.map(e=>{
+      const c=byId[String(e['Lead ID']).trim()]||{};
+      const sv=yes(c['Email Sent']),bv=yes(c['Bounced']),rv=yes(c['Reply Received']),mv=yes(c['Meeting Booked']);
+      const status=bv?'bounced':mv?'meeting':rv?'replied':sv?'delivered':'sent';
+      return [e['Company']||c['Company']||'',c['Email']||e['Email']||'',e['Subject']||'',status,
+        sv?1:0,(sv&&!bv)?1:0,bv?1:0,rv?1:0,yes(c['Follow-up 1 Sent'])?1:0,yes(c['Follow-up 2 Sent'])?1:0,mv?1:0];
+    });
+    boot({
+      metrics:{total:leads.length,new:st('New'),research:st('Research Complete'),email_ready:st('Email Ready'),
+        sent,delivered,bounced,replies,meetings,needs_review:st('Needs Review'),social:st('Social Outreach'),failed:st('Failed'),
+        reply_rate:sent?((replies/sent*100).toFixed(1)+'%'):'0%',
+        bounce_rate:sent?((bounced/sent*100).toFixed(1)+'%'):'0%',
+        delivered_rate:sent?((delivered/sent*100).toFixed(1)+'%'):'0%'},
+      pipeline:{Leads:leads.length,Researched:st('Research Complete'),"Email ready":st('Email Ready'),Sent:sent,Replied:replies,Meetings:meetings},
+      deliver:{Delivered:delivered,Bounced:bounced,Replied:replies},
+      feed:act.slice(-8).reverse().map(a=>[a['Action']||'',a['Result']||'',a['Company']||'',a['Timestamp']||'','•']),
+      emails:rows
+    },true);
+  }catch(err){ document.getElementById('dataSource').textContent='error: '+err.message; }
 }
-if(SHEET_ID){loadLive().catch(()=>boot(SAMPLE,false));}else{boot(SAMPLE,false);}
 </script>
 </body>
 </html>
