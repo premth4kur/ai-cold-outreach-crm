@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ences Outreach — Import Leads</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{--bg:#08080c;--bg2:#0f0f16;--glass:rgba(255,255,255,.045);--glass-b:rgba(255,255,255,.09);
+    --txt:#f2f3f8;--muted:#9aa0b2;--a1:#7c5cff;--a2:#b26bff;--a3:#3ff0c2;--danger:#ff5d73;--radius:16px}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+  .mesh{position:fixed;inset:0;z-index:-1;background:
+     radial-gradient(50% 40% at 12% 8%,rgba(124,92,255,.28),transparent 60%),
+     radial-gradient(45% 45% at 88% 12%,rgba(178,107,255,.22),transparent 60%),
+     radial-gradient(50% 50% at 78% 92%,rgba(63,240,194,.15),transparent 60%);filter:blur(12px)}
+  .wrap{max-width:760px;margin:0 auto;padding:28px 20px 70px}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk';font-weight:700}
+  .logo{width:30px;height:30px;border-radius:9px;background:conic-gradient(from 210deg,var(--a1),var(--a2),var(--a3),var(--a1));box-shadow:0 0 22px rgba(124,92,255,.55)}
+  a{color:var(--a1);text-decoration:none}
+  h1{font-family:'Space Grotesk';font-size:28px;margin:0 0 6px;letter-spacing:-.5px}
+  .sub{color:var(--muted);margin:0 0 22px;font-size:14.5px;line-height:1.6}
+  .card{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--radius);padding:22px;margin-bottom:16px}
+  .step-n{display:inline-flex;width:24px;height:24px;border-radius:50%;background:rgba(124,92,255,.2);
+     color:#cbb8ff;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin-right:9px}
+  .card h3{margin:0 0 12px;font-size:16px;display:flex;align-items:center}
+  label{display:block;font-size:12.5px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  input[type=text]{width:100%;background:var(--bg2);color:var(--txt);border:1px solid var(--glass-b);
+     border-radius:10px;padding:11px 13px;font-size:14px;margin-bottom:12px}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:11px;font-weight:600;
+     font-size:14px;border:1px solid transparent;cursor:pointer;transition:.2s}
+  .btn.primary{background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;box-shadow:0 8px 26px rgba(124,92,255,.4)}
+  .btn.primary:hover{transform:translateY(-2px)}
+  .btn.ghost{border-color:var(--glass-b);background:var(--glass);color:var(--txt)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .drop{border:2px dashed var(--glass-b);border-radius:14px;padding:34px;text-align:center;color:var(--muted);
+     cursor:pointer;transition:.2s}
+  .drop:hover,.drop.drag{border-color:var(--a1);background:rgba(124,92,255,.06);color:var(--txt)}
+  .muted{color:var(--muted)} .ok{color:var(--a3)} .err{color:var(--danger)}
+  .pill{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--glass-b);color:var(--muted)}
+  .pill.on{color:var(--a3);border-color:#20573f}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:12px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--glass-b);white-space:nowrap}
+  th{color:var(--muted);font-weight:600}
+  .log{background:#0a0a10;border:1px solid var(--glass-b);border-radius:10px;padding:13px;font-size:12.5px;
+     font-family:ui-monospace,monospace;white-space:pre-wrap;max-height:220px;overflow:auto;line-height:1.55;margin-top:12px}
+  .hide{display:none}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  details{margin-top:10px} summary{cursor:pointer;color:var(--a1);font-size:13px}
+  code{background:var(--bg2);padding:2px 6px;border-radius:5px;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="mesh"></div>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><div class="logo"></div> ENCES Outreach</div>
+    <a href="./">← Dashboard</a>
+  </div>
+
+  <h1>Import leads</h1>
+  <p class="sub">Sign in with the Google account that owns your CRM sheet, drop in an Excel or CSV, and the
+     leads are added straight to your <b>Leads</b> tab as <code>New</code>. Everything happens in your
+     browser with your own Google login — no server, no keys stored.</p>
+
+  <!-- Step 1: config -->
+  <div class="card">
+    <h3><span class="step-n">1</span> Connect</h3>
+    <label>Google OAuth Client ID <span class="muted">(one-time — see setup below)</span></label>
+    <input type="text" id="clientId" placeholder="xxxxxxxx.apps.googleusercontent.com" />
+    <label>Google Sheet ID</label>
+    <input type="text" id="sheetId" placeholder="1BxiMVs0XRA5nF… (from your sheet URL)" />
+    <div class="row">
+      <button class="btn primary" id="signBtn">Sign in with Google</button>
+      <span class="pill" id="authState">not connected</span>
+    </div>
+    <details>
+      <summary>How to get the Client ID (one time)</summary>
+      <p class="sub" style="margin-top:10px">
+        1. <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud → Credentials</a>
+        (same project as your service account).<br>
+        2. <b>Create credentials → OAuth client ID</b>. If asked, configure the consent screen: type
+        <b>External</b>, add an app name + your email, save, and add your own email under
+        <b>Test users</b>.<br>
+        3. Application type <b>Web application</b>. Under <b>Authorized JavaScript origins</b> add:
+        <code id="originHint">https://premth4kur.github.io</code><br>
+        4. Create, copy the <b>Client ID</b> (ends in <code>.apps.googleusercontent.com</code>), paste it above.
+        It's not a secret — safe to use in a page.
+      </p>
+    </details>
+  </div>
+
+  <!-- Step 2: upload -->
+  <div class="card">
+    <h3><span class="step-n">2</span> Upload file</h3>
+    <div class="drop" id="drop">
+      <div style="font-size:15px;margin-bottom:4px">Drop an .xlsx / .xls / .csv here</div>
+      <div class="muted" style="font-size:13px">or click to choose a file</div>
+      <input type="file" id="file" accept=".xlsx,.xls,.csv" class="hide" />
+    </div>
+    <div id="fileInfo" class="sub hide" style="margin-top:12px"></div>
+    <div id="previewWrap" class="hide"><div id="preview"></div></div>
+  </div>
+
+  <!-- Step 3: import -->
+  <div class="card">
+    <h3><span class="step-n">3</span> Import to sheet</h3>
+    <div class="row">
+      <button class="btn primary" id="importBtn" disabled>Import leads →</button>
+      <span class="muted" id="importHint">Connect + choose a file first.</span>
+    </div>
+    <div class="log hide" id="log"></div>
+  </div>
+</div>
+
+<script>
+/* ─────────── config persistence ─────────── */
+const $=s=>document.querySelector(s);
+$('#originHint').textContent = location.origin;
+['clientId','sheetId'].forEach(k=>{
+  const el=$('#'+k); el.value=localStorage.getItem('imp_'+k)||'';
+  el.addEventListener('input',()=>localStorage.setItem('imp_'+k,el.value.trim()));
+});
+
+/* ─────────── Google OAuth (token client) ─────────── */
+let accessToken=null, tokenClient=null;
+const SCOPE='https://www.googleapis.com/auth/spreadsheets';
+function initToken(){
+  const cid=$('#clientId').value.trim();
+  if(!cid){alert('Enter your OAuth Client ID first.');return null;}
+  return google.accounts.oauth2.initTokenClient({
+    client_id:cid, scope:SCOPE,
+    callback:(resp)=>{
+      if(resp.error){setAuth(false,resp.error);return;}
+      accessToken=resp.access_token; setAuth(true); maybeEnableImport();
+    }
+  });
+}
+function setAuth(ok,msg){
+  const p=$('#authState');
+  p.textContent = ok?'connected':(msg||'not connected');
+  p.className='pill'+(ok?' on':'');
+}
+$('#signBtn').onclick=()=>{
+  tokenClient=initToken(); if(tokenClient) tokenClient.requestAccessToken({prompt:''});
+};
+
+/* ─────────── file parsing (SheetJS) ─────────── */
+let PARSED=[];   // array of row objects (raw headers)
+const drop=$('#drop'), fileEl=$('#file');
+drop.onclick=()=>fileEl.click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag')};
+drop.ondragleave=()=>drop.classList.remove('drag');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0])};
+fileEl.onchange=()=>fileEl.files[0]&&readFile(fileEl.files[0]);
+
+function readFile(f){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    PARSED=XLSX.utils.sheet_to_json(ws,{defval:''});
+    $('#fileInfo').classList.remove('hide');
+    $('#fileInfo').innerHTML=`<b>${f.name}</b> — ${PARSED.length} rows detected.`;
+    renderPreview();
+    maybeEnableImport();
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+/* ─────────── column mapping (mirrors import_leads.py) ─────────── */
+function mapHeader(h){
+  const k=h.trim().toLowerCase();
+  if(k.includes('first')&&k.includes('name'))return'First Name';
+  if(k.includes('last')&&k.includes('name'))return'Last Name';
+  if(k.includes('full_name')||['name','prospect','contact','prospect_full_name'].includes(k))return'__full';
+  if(k.includes('instagram')||k==='ig')return'Instagram';
+  if(k.includes('linkedin'))return'LinkedIn';
+  if(k.includes('email'))return'Email';
+  if(['website','domain','url','site'].some(x=>k.includes(x)))return'Website';
+  if(k.includes('business_name')||['company','organisation','organization','business','brand'].includes(k))return'Company';
+  if(k.includes('country'))return'Country';
+  if(k.includes('naics')||k.includes('industry')||k.includes('sector'))return'Industry';
+  if(k.includes('revenue')||k.includes('segment'))return'Segment';
+  if(k.includes('title')||k.includes('job')||k.includes('role'))return'__title';
+  return null;
+}
+function splitName(full){
+  full=String(full).split(',')[0].trim(); const p=full.split(/\s+/).filter(Boolean);
+  if(!p.length)return['','']; if(p.length===1)return[p[0],'']; return[p[0],p.slice(1).join(' ')];
+}
+function normSite(w){w=String(w).trim();if(w&&!/^https?:\/\//.test(w))w='https://'+w;return w;}
+function toLead(raw){
+  const lead={'Status':'New','Added Date':new Date().toISOString().slice(0,10),'Campaign':'Web import','Import Batch':CURRENT_FILE};
+  let title='';
+  for(const key in raw){
+    const t=mapHeader(key); const v=String(raw[key]).trim(); if(!t||!v)continue;
+    if(t==='__full'){const[f,l]=splitName(v); if(!lead['First Name'])lead['First Name']=f; if(!lead['Last Name'])lead['Last Name']=l;}
+    else if(t==='__title'){title=v;}
+    else if(t==='Website'){lead['Website']=normSite(v);}
+    else if(!lead[t]){lead[t]=v;}
+  }
+  if(title&&!lead['Segment'])lead['Segment']=title;
+  return lead;
+}
+let CURRENT_FILE='';
+function renderPreview(){
+  CURRENT_FILE=$('#fileInfo').textContent.split(' — ')[0];
+  const leads=PARSED.slice(0,5).map(toLead);
+  const cols=['First Name','Last Name','Company','Website','Country'];
+  $('#previewWrap').classList.remove('hide');
+  $('#preview').innerHTML='<div class="muted" style="font-size:12.5px">Preview (first 5, mapped):</div>'+
+    '<table><thead><tr>'+cols.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>'+
+    leads.map(l=>'<tr>'+cols.map(c=>`<td>${l[c]||'<span class=muted>—</span>'}</td>`).join('')+'</tr>').join('')+
+    '</tbody></table>';
+}
+
+/* ─────────── dedupe helpers ─────────── */
+const yes=v=>['yes','true','1'].includes(String(v).toLowerCase().trim());
+function nEmail(e){return String(e||'').trim().toLowerCase();}
+function nSite(w){return String(w||'').trim().toLowerCase().replace(/^https?:\/\//,'').replace(/^www\./,'').replace(/\/+$/,'');}
+function nCo(c){return String(c||'').trim().toLowerCase().replace(/[.,]/g,' ')
+  .replace(/\b(inc|incorporated|llc|ltd|limited|corp|corporation|co|gmbh|pvt|private)\b/g,' ').replace(/\s+/g,' ').trim();}
+
+/* ─────────── Sheets API ─────────── */
+async function api(path,opts={}){
+  const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+path,{
+    ...opts, headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json',...(opts.headers||{})}});
+  if(!r.ok){const t=await r.text(); throw new Error('Sheets API '+r.status+': '+t);}
+  return r.json();
+}
+function logln(msg,cls){const l=$('#log');l.classList.remove('hide');
+  l.innerHTML+=(cls?`<span class="${cls}">${msg}</span>`:msg)+'\n';l.scrollTop=l.scrollHeight;}
+
+function maybeEnableImport(){
+  const ready=accessToken&&PARSED.length&&$('#sheetId').value.trim();
+  $('#importBtn').disabled=!ready;
+  $('#importHint').textContent=ready?`${PARSED.length} rows ready to import.`:'Connect + choose a file first.';
+}
+['sheetId'].forEach(id=>$('#'+id).addEventListener('input',maybeEnableImport));
+
+$('#importBtn').onclick=async()=>{
+  const sid=$('#sheetId').value.trim();
+  $('#importBtn').disabled=true; $('#log').innerHTML='';
+  try{
+    logln('Reading Leads tab header…');
+    const header=(await api(`${sid}/values/Leads!1:1`)).values?.[0];
+    if(!header||!header.length) throw new Error('Leads tab or header row not found. Run the workflow once (init_crm) so tabs exist.');
+    const idx={}; header.forEach((h,i)=>idx[h]=i);
+
+    logln('Loading existing leads for de-dupe…');
+    const existing=(await api(`${sid}/values/Leads`)).values||[];
+    const emails=new Set(), sites=new Set();
+    existing.slice(1).forEach(r=>{
+      const e=nEmail(r[idx['Email']]); if(e)emails.add(e);
+      const key=nCo(r[idx['Company']])+'|'+nSite(r[idx['Website']]); if(key.replace(/\|/g,''))sites.add(key);
+    });
+
+    logln('Mapping + de-duplicating…');
+    const rows=[]; let skipped=0;
+    for(const raw of PARSED){
+      const lead=toLead(raw);
+      if(!lead['Company']&&!lead['Website']){skipped++;continue;}
+      const e=nEmail(lead['Email']); const key=nCo(lead['Company'])+'|'+nSite(lead['Website']);
+      if((e&&emails.has(e))||(key.replace(/\|/g,'')&&sites.has(key))){skipped++;continue;}
+      if(e)emails.add(e); if(key.replace(/\|/g,''))sites.add(key);
+      const line=new Array(header.length).fill('');
+      for(const col in lead){ if(idx[col]!=null) line[idx[col]]=lead[col]; }
+      rows.push(line);
+    }
+    logln(`New: ${rows.length}  ·  duplicates/blank skipped: ${skipped}`);
+    if(!rows.length){logln('Nothing new to import.','ok');$('#importBtn').disabled=false;return;}
+
+    logln('Appending to Google Sheet…');
+    await api(`${sid}/values/Leads!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      {method:'POST',body:JSON.stringify({values:rows})});
+    logln(`✓ Imported ${rows.length} new leads as "New". They're ready for the outreach engine.`,'ok');
+  }catch(err){
+    logln('✕ '+err.message,'err');
+  }finally{
+    $('#importBtn').disabled=false;
+  }
+};
+</script>
+</body>
+</html>
