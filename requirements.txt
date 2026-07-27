@@ -17,6 +17,9 @@ tldextract==5.1.2
 # AI providers (both optional at runtime; installed for switchability)
 anthropic==0.34.2
 openai==1.51.0
+# Pin httpx — newer httpx (>=0.28) drops the `proxies` arg and breaks the
+# openai/anthropic client init ("unexpected keyword argument 'proxies'").
+httpx==0.27.2
 
 # Retry / resilience
 tenacity==9.0.0
@@ -27,4 +30,8 @@ python-dateutil==2.9.0
 # Web dashboard (local control panel)
 Flask==3.0.3
 waitress==3.0.0
+
+# Bulk lead import (CSV / Excel)
+pandas==2.2.2
+openpyxl==3.1.5
 
