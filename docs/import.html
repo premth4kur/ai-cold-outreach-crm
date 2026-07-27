@@ -102,6 +102,9 @@
       <input type="file" id="file" accept=".xlsx,.xls,.csv" class="hide" />
     </div>
     <div id="fileInfo" class="sub hide" style="margin-top:12px"></div>
+    <div id="fileActions" class="row hide" style="margin-top:10px">
+      <button class="btn ghost" id="clearBtn" type="button">✕ Clear / re-upload</button>
+    </div>
     <div id="previewWrap" class="hide"><div id="preview"></div></div>
   </div>
 
@@ -165,11 +168,22 @@ function readFile(f){
     PARSED=XLSX.utils.sheet_to_json(ws,{defval:''});
     $('#fileInfo').classList.remove('hide');
     $('#fileInfo').innerHTML=`<b>${f.name}</b> — ${PARSED.length} rows detected.`;
+    $('#fileActions').classList.remove('hide');
     renderPreview();
     maybeEnableImport();
   };
   reader.readAsArrayBuffer(f);
 }
+
+function clearFile(){
+  PARSED=[]; CURRENT_FILE=''; fileEl.value='';
+  $('#fileInfo').classList.add('hide'); $('#fileInfo').innerHTML='';
+  $('#fileActions').classList.add('hide');
+  $('#previewWrap').classList.add('hide'); $('#preview').innerHTML='';
+  $('#log').classList.add('hide'); $('#log').innerHTML='';
+  maybeEnableImport();
+}
+$('#clearBtn').onclick=clearFile;
 
 /* ─────────── column mapping (mirrors import_leads.py) ─────────── */
 function mapHeader(h){
