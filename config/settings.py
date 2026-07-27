@@ -139,6 +139,7 @@ class SMTPConfig:
     password: str
     sender_name: str
     sender_email: str
+    test_email: str = ""  # BCC monitor: every send is copied here
 
     def __repr__(self) -> str:
         return (
@@ -279,6 +280,7 @@ def _build_settings() -> Settings:
             password=_get("SMTP_PASSWORD"),
             sender_name=_get("SENDER_NAME", "Prem Thakur"),
             sender_email=_get("SENDER_EMAIL"),
+            test_email=_get("TEST_EMAIL", ""),
         ),
         imap=IMAPConfig(
             host=_get("IMAP_HOST", "imap.hostinger.com"),
