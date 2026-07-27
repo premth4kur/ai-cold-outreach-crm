@@ -3,292 +3,385 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AI Cold Outreach CRM — Live Dashboard</title>
-<meta name="description" content="A one-click AI outreach engine: research, personalized emails, follow-ups, and reply tracking — all driven from Google Sheets." />
+<title>Ences Outreach — AI Cold Email Command Center</title>
+<meta name="description" content="AI cold outreach engine: research, personalized emails, follow-ups, and full email tracking — sent, delivered, bounced, replied, meetings." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#070a12; --bg2:#0b1020; --glass:rgba(255,255,255,.045); --glass-b:rgba(255,255,255,.09);
-    --txt:#eef1ف7; --txt:#eef1f7; --muted:#93a0b5;
-    --a1:#6d8bff; --a2:#a06bff; --a3:#25e6b0; --warn:#ffc46b; --danger:#ff7a90;
-    --radius:20px;
+    /* Ences brand: near-black base, white wordmark, signature lime-green accent */
+    --bg:#090909; --bg2:#141414; --glass:rgba(255,255,255,.05); --glass-b:rgba(255,255,255,.10);
+    --txt:#f4f6f0; --muted:#9a9a90;
+    --a1:#b4e925; --a2:#8fd000; --a3:#d7ff6b; --warn:#ffc24b; --danger:#ff5d73; --ok:#b4e925;
+    --radius:18px;
   }
   *{box-sizing:border-box} html{scroll-behavior:smooth}
   body{margin:0;background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;overflow-x:hidden}
   h1,h2,h3,.font-d{font-family:'Space Grotesk','Inter',sans-serif}
   a{color:inherit;text-decoration:none}
-  /* animated gradient mesh background */
   .mesh{position:fixed;inset:0;z-index:-2;background:
-     radial-gradient(50% 40% at 15% 10%,rgba(109,139,255,.28),transparent 60%),
-     radial-gradient(45% 45% at 85% 15%,rgba(160,107,255,.24),transparent 60%),
-     radial-gradient(50% 50% at 75% 90%,rgba(37,230,176,.18),transparent 60%),
-     radial-gradient(40% 40% at 10% 85%,rgba(255,122,144,.14),transparent 60%);
-     filter:blur(10px);animation:drift 18s ease-in-out infinite alternate}
-  @keyframes drift{to{transform:translate3d(0,-16px,0) scale(1.05)}}
-  .grid-lines{position:fixed;inset:0;z-index:-1;opacity:.35;
+     radial-gradient(50% 40% at 12% 8%,rgba(180,233,37,.22),transparent 60%),
+     radial-gradient(45% 45% at 88% 12%,rgba(143,208,0,.18),transparent 60%),
+     radial-gradient(50% 50% at 78% 92%,rgba(215,255,107,.14),transparent 60%);
+     filter:blur(12px);animation:drift 20s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate3d(0,-18px,0) scale(1.05)}}
+  .grid-lines{position:fixed;inset:0;z-index:-1;opacity:.32;
      background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),
-     linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;
+     linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:46px 46px;
      -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000,transparent 75%)}
-  .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
-  /* nav */
-  nav{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);
-     background:rgba(7,10,18,.6);border-bottom:1px solid var(--glass-b)}
-  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
-  .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk';font-weight:700;font-size:16px}
-  .logo{width:30px;height:30px;border-radius:9px;background:conic-gradient(from 200deg,var(--a1),var(--a2),var(--a3),var(--a1));
-     box-shadow:0 0 22px rgba(109,139,255,.55)}
-  .nav-links{display:flex;gap:26px;color:var(--muted);font-size:14px;font-weight:500}
-  .nav-links a:hover{color:var(--txt)}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 22px}
+  nav{position:sticky;top:0;z-index:30;backdrop-filter:blur(16px);
+     background:rgba(8,8,12,.72);border-bottom:1px solid var(--glass-b)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:66px}
+  .brand{display:flex;align-items:center;gap:11px;font-family:'Space Grotesk';font-weight:700;font-size:16px;letter-spacing:.3px}
+  .logo{width:32px;height:32px;border-radius:10px;background:conic-gradient(from 210deg,var(--a1),var(--a2),var(--a3),var(--a1));
+     box-shadow:0 0 24px rgba(124,92,255,.6)}
+  .nav-links{display:flex;gap:6px}
+  .nav-links a{color:var(--muted);font-size:14px;font-weight:550;padding:8px 14px;border-radius:10px;cursor:pointer}
+  .nav-links a:hover,.nav-links a.active{color:var(--txt);background:var(--glass)}
   .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;font-weight:600;font-size:14px;
      border:1px solid transparent;cursor:pointer;transition:.2s}
-  .btn.primary{background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;box-shadow:0 8px 30px rgba(120,110,255,.4)}
-  .btn.primary:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(120,110,255,.55)}
+  .btn.primary{background:linear-gradient(135deg,var(--a1),var(--a2));color:#0d0d0d;box-shadow:0 8px 30px rgba(180,233,37,.32)}
+  .btn.primary:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(180,233,37,.45)}
   .btn.ghost{border-color:var(--glass-b);background:var(--glass);color:var(--txt)}
   .btn.ghost:hover{border-color:var(--a1)}
-  /* hero */
-  header.hero{padding:86px 0 40px;text-align:center}
+  header.hero{padding:76px 0 30px;text-align:center}
   .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 15px;border-radius:999px;font-size:12.5px;
-     border:1px solid var(--glass-b);background:var(--glass);color:var(--muted);margin-bottom:24px}
+     border:1px solid var(--glass-b);background:var(--glass);color:var(--muted);margin-bottom:22px}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--a3);box-shadow:0 0 10px var(--a3);animation:pulse 1.6s infinite}
   @keyframes pulse{50%{opacity:.35}}
-  .hero h1{font-size:clamp(36px,6vw,66px);line-height:1.03;margin:0 0 18px;letter-spacing:-1.5px;font-weight:700}
+  .hero h1{font-size:clamp(34px,5.6vw,60px);line-height:1.04;margin:0 0 16px;letter-spacing:-1.4px;font-weight:700}
   .hero h1 .g{background:linear-gradient(120deg,var(--a1),var(--a2) 55%,var(--a3));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .hero p{color:var(--muted);font-size:clamp(15px,2vw,19px);max-width:640px;margin:0 auto 30px;line-height:1.6}
+  .hero p{color:var(--muted);font-size:clamp(15px,2vw,18px);max-width:620px;margin:0 auto 26px;line-height:1.6}
   .hero .cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-  /* section */
-  section{padding:56px 0}
+  section{padding:44px 0}
+  .view{display:none} .view.active{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .eyebrow{color:var(--a1);font-weight:600;font-size:13px;letter-spacing:2px;text-transform:uppercase}
-  .sec-title{font-size:clamp(24px,3.4vw,36px);margin:8px 0 6px;letter-spacing:-.5px}
-  .sec-sub{color:var(--muted);max-width:560px}
-  /* dashboard */
-  .dash-head{display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:22px}
+  .sec-title{font-size:clamp(23px,3.2vw,34px);margin:8px 0 6px;letter-spacing:-.5px}
+  .sec-sub{color:var(--muted);max-width:600px}
+  .head-row{display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:20px}
   .live-tag{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
-  .card{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--radius);padding:22px;position:relative;overflow:hidden}
-  .card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.06),transparent 40%);pointer-events:none}
-  .card .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
-  .card .v{font-family:'Space Grotesk';font-size:38px;font-weight:700;margin-top:10px;line-height:1}
-  .card .s{font-size:12.5px;color:var(--muted);margin-top:8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:15px}
+  .card{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.06),transparent 42%);pointer-events:none}
+  .card .k{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+  .card .v{font-family:'Space Grotesk';font-size:34px;font-weight:700;margin-top:9px;line-height:1}
+  .card .s{font-size:12px;color:var(--muted);margin-top:7px}
   .card.g1 .v{background:linear-gradient(120deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
   .card.g2 .v{background:linear-gradient(120deg,var(--a3),#7ef);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .charts{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-top:16px}
+  .card.warn .v{color:var(--warn)} .card.danger .v{color:var(--danger)}
+  .charts{display:grid;grid-template-columns:1.4fr 1fr;gap:15px;margin-top:15px}
   @media(max-width:820px){.charts{grid-template-columns:1fr}}
-  .panel{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--radius);padding:22px}
-  .panel h3{margin:0 0 4px;font-size:16px}
-  .panel .muted{color:var(--muted);font-size:13px;margin-bottom:14px}
-  .feed{display:flex;flex-direction:column;gap:12px;max-height:280px;overflow:auto}
+  .panel{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--radius);padding:20px}
+  .panel h3{margin:0 0 4px;font-size:16px}.panel .muted{color:var(--muted);font-size:13px;margin-bottom:12px}
+  .feed{display:flex;flex-direction:column;gap:11px;max-height:280px;overflow:auto}
   .feed .item{display:flex;gap:12px;align-items:flex-start;font-size:13.5px}
   .feed .ic{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center;background:var(--glass-b)}
   .feed .t{color:var(--muted);font-size:12px}
-  /* features */
-  .feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
-  .feat .card:hover{transform:translateY(-4px);border-color:var(--a1);transition:.25s}
-  .feat .ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;
-     background:linear-gradient(135deg,rgba(109,139,255,.25),rgba(160,107,255,.2));border:1px solid var(--glass-b);margin-bottom:14px}
-  .feat h3{margin:0 0 8px;font-size:17px}
-  .feat p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
-  /* pipeline steps */
+  /* email table */
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:16px 0}
+  .inp{background:var(--bg2);color:var(--txt);border:1px solid var(--glass-b);border-radius:10px;padding:9px 13px;font-size:13.5px}
+  .chip{padding:7px 13px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--muted);
+     font-size:12.5px;cursor:pointer;font-weight:550}
+  .chip.active{color:var(--txt);border-color:var(--a1);background:rgba(180,233,37,.16)}
+  .tablewrap{overflow:auto;border:1px solid var(--glass-b);border-radius:var(--radius)}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:820px}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--glass-b);white-space:nowrap}
+  th{color:var(--muted);font-weight:600;background:var(--bg2);position:sticky;top:0}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .tag{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:600}
+  .t-sent{color:#9ecbff;background:rgba(90,150,255,.14)}
+  .t-delivered{color:var(--a1);background:rgba(180,233,37,.14)}
+  .t-replied{color:#d7ff6b;background:rgba(143,208,0,.18)}
+  .t-bounced{color:var(--danger);background:rgba(255,93,115,.15)}
+  .t-meeting{color:#ffd479;background:rgba(255,194,75,.15)}
+  .yes{color:var(--a3)} .no{color:#5a6072} .bno{color:var(--danger)}
   .flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin-top:20px}
   .step{padding:10px 16px;border-radius:12px;background:var(--glass);border:1px solid var(--glass-b);font-size:13.5px;font-weight:500}
   .arrow{color:var(--a1);font-size:18px}
-  footer{padding:40px 0;border-top:1px solid var(--glass-b);color:var(--muted);font-size:13px;text-align:center}
-  .banner{background:rgba(255,196,107,.08);border:1px solid rgba(255,196,107,.3);color:#ffdca0;
+  .feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .feat .card:hover{transform:translateY(-4px);border-color:var(--a1);transition:.25s}
+  .feat .ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;
+     background:linear-gradient(135deg,rgba(180,233,37,.25),rgba(143,208,0,.2));border:1px solid var(--glass-b);margin-bottom:13px}
+  .feat h3{margin:0 0 8px;font-size:17px}.feat p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
+  footer{padding:38px 0;border-top:1px solid var(--glass-b);color:var(--muted);font-size:13px;text-align:center}
+  .banner{background:rgba(255,194,75,.08);border:1px solid rgba(255,194,75,.3);color:#ffdca0;
      padding:10px 16px;border-radius:12px;font-size:13px;margin-bottom:18px;display:none}
+  .spin{display:inline-block;width:12px;height:12px;border:2px solid var(--muted);border-top-color:var(--a1);
+     border-radius:50%;animation:s .8s linear infinite;vertical-align:-1px}
+  @keyframes s{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <div class="mesh"></div><div class="grid-lines"></div>
 
 <nav><div class="wrap">
-  <div class="brand"><div class="logo"></div> Outreach<span style="color:var(--a1)">AI</span></div>
-  <div class="nav-links" style="display:flex">
-    <a href="#dashboard">Dashboard</a><a href="#features">Features</a><a href="#flow">How it works</a>
+  <div class="brand"><img src="https://encesmarketing.com/wp-content/uploads/2025/06/Ences-Lgoo_ences-name-only-white.png" alt="Ences" style="height:24px;width:auto"> <span style="color:var(--a1);font-weight:600">Outreach</span></div>
+  <div class="nav-links">
+    <a data-view="dashboard" class="active">Dashboard</a>
+    <a data-view="emails">Emails</a>
+    <a data-view="features">Features</a>
+    <a data-view="flow">How it works</a>
   </div>
   <a class="btn primary" href="https://cal.com/encesmarketing/15min" target="_blank">Book a call</a>
 </div></nav>
 
 <header class="hero"><div class="wrap">
-  <div class="pill"><span class="dot"></span> One-click AI outreach · powered by Google Sheets</div>
-  <h1>Turn a spreadsheet of leads<br>into <span class="g">personalized outreach</span>.</h1>
-  <p>Research every company, write genuinely personalized emails and two follow-ups,
-     send through your own inbox, and track replies — automatically, from one button.</p>
+  <div class="pill"><span class="dot"></span> AI cold outreach · command center</div>
+  <h1>Every email, <span class="g">tracked end to end</span>.</h1>
+  <p>Sent, delivered, bounced, replied, and meetings booked — a live command center over your
+     Google-Sheets-driven outreach engine.</p>
   <div class="cta">
-    <a class="btn primary" href="#dashboard">View live dashboard →</a>
-    <a class="btn ghost" href="https://premthakurr.framer.media/" target="_blank">See portfolio</a>
+    <a class="btn primary" data-view="emails">Open email tracker →</a>
+    <a class="btn ghost" href="https://premthakurr.framer.media/" target="_blank">Portfolio</a>
   </div>
 </div></header>
 
-<section id="dashboard"><div class="wrap">
-  <div class="dash-head">
-    <div>
-      <div class="eyebrow">Live metrics</div>
-      <h2 class="sec-title">Campaign dashboard</h2>
-    </div>
+<!-- ══════════ DASHBOARD VIEW ══════════ -->
+<section id="v-dashboard" class="view active"><div class="wrap">
+  <div class="head-row">
+    <div><div class="eyebrow">Overview</div><h2 class="sec-title">Campaign dashboard</h2></div>
     <div class="live-tag"><span class="dot"></span> <span id="dataSource">connecting…</span></div>
   </div>
-  <div id="sampleBanner" class="banner">Showing sample data — publish your Google Sheet to make this live (see notes below).</div>
-
+  <div id="sampleBanner" class="banner">Showing sample data — publish your Google Sheet to go live (see notes at page bottom).</div>
   <div class="cards" id="cards"></div>
-
   <div class="charts">
-    <div class="panel">
-      <h3>Pipeline</h3><div class="muted">Leads by stage</div>
-      <canvas id="funnel" height="150"></canvas>
-    </div>
-    <div class="panel">
-      <h3>Outcomes</h3><div class="muted">Sent vs replied vs meetings</div>
-      <canvas id="donut" height="150"></canvas>
-    </div>
+    <div class="panel"><h3>Pipeline</h3><div class="muted">Leads by stage</div><canvas id="funnel" height="150"></canvas></div>
+    <div class="panel"><h3>Deliverability</h3><div class="muted">Delivered · Bounced · Replied</div><canvas id="donut" height="150"></canvas></div>
+  </div>
+  <div class="panel" style="margin-top:15px"><h3>Recent activity</h3><div class="muted">Latest engine actions</div>
+    <div class="feed" id="feed"></div></div>
+</div></section>
+
+<!-- ══════════ EMAILS VIEW ══════════ -->
+<section id="v-emails" class="view"><div class="wrap">
+  <div class="head-row">
+    <div><div class="eyebrow">Deliverability & replies</div><h2 class="sec-title">Email tracker</h2>
+      <p class="sec-sub">Every message and its status — sent, delivered, bounced, replied, meeting booked.</p></div>
+    <div class="live-tag"><span class="dot"></span> <span id="emailSource">—</span></div>
   </div>
 
-  <div class="panel" style="margin-top:16px">
-    <h3>Recent activity</h3><div class="muted">Latest actions from the engine</div>
-    <div class="feed" id="feed"></div>
+  <div class="cards" id="emailCards"></div>
+
+  <div class="toolbar">
+    <input class="inp" id="emailSearch" placeholder="Search company, email, subject…" style="min-width:240px" />
+    <span class="chip active" data-filter="all">All</span>
+    <span class="chip" data-filter="delivered">Delivered</span>
+    <span class="chip" data-filter="replied">Replied</span>
+    <span class="chip" data-filter="bounced">Bounced</span>
+    <span class="chip" data-filter="meeting">Meetings</span>
+  </div>
+
+  <div class="tablewrap">
+    <table id="emailTable"><thead><tr>
+      <th>Company</th><th>Recipient</th><th>Subject</th><th>Status</th>
+      <th>Sent</th><th>Delivered</th><th>Bounced</th><th>Replied</th>
+      <th>FU1</th><th>FU2</th><th>Meeting</th>
+    </tr></thead><tbody></tbody></table>
   </div>
 </div></section>
 
-<section id="features"><div class="wrap">
-  <div class="eyebrow">Built for reliability</div>
-  <h2 class="sec-title">Everything, handled</h2>
-  <p class="sec-sub" style="margin-bottom:26px">Modular Python engine with a hard validation gate before anything sends.</p>
+<!-- ══════════ FEATURES VIEW ══════════ -->
+<section id="v-features" class="view"><div class="wrap">
+  <div class="eyebrow">Built for reliability</div><h2 class="sec-title">Everything, handled</h2>
+  <p class="sec-sub" style="margin-bottom:24px">Modular engine with a hard validation gate before anything sends.</p>
   <div class="feat">
-    <div class="card"><div class="ico">🔎</div><h3>Real research</h3><p>Visits each site, finds one genuine observation, and only uses officially published business emails — never guessed or scraped from third parties.</p></div>
-    <div class="card"><div class="ico">✍️</div><h3>Personalized copy</h3><p>Subject, email, and two follow-ups under 130 words each — grounded in the research, positioning you as a connected-brand-systems partner.</p></div>
-    <div class="card"><div class="ico">📤</div><h3>Your inbox</h3><p>Sends via your own Hostinger SMTP with human-like 4–10 minute gaps and full retry + logging. Replies detected over IMAP.</p></div>
-    <div class="card"><div class="ico">🔁</div><h3>Smart follow-ups</h3><p>Follow-up 1 at day 4, follow-up 2 at day 10 — automatically skipped the moment someone replies.</p></div>
-    <div class="card"><div class="ico">🛡️</div><h3>Never double-sends</h3><p>Status-driven and duplicate-safe. Every run resumes exactly where it left off — no restarts, no repeats.</p></div>
-    <div class="card"><div class="ico">📊</div><h3>Sheets as CRM</h3><p>Six tabs — Dashboard, Leads, Research, Emails, Campaign, Activity Log — updated live after every step.</p></div>
+    <div class="card"><div class="ico">🔎</div><h3>Real research</h3><p>Visits each site, finds one genuine observation, and only uses officially published business emails.</p></div>
+    <div class="card"><div class="ico">✍️</div><h3>Personalized copy</h3><p>Subject, email, and two follow-ups under 130 words — grounded in the research.</p></div>
+    <div class="card"><div class="ico">📮</div><h3>Full tracking</h3><p>Sent, delivered, bounced (inbox scan for delivery failures), replied, and meetings — all on one page.</p></div>
+    <div class="card"><div class="ico">🔁</div><h3>Smart follow-ups</h3><p>Follow-up 1 at day 4, follow-up 2 at day 10 — auto-skipped the moment someone replies.</p></div>
+    <div class="card"><div class="ico">🛡️</div><h3>Never double-sends</h3><p>Status-driven and duplicate-safe. Every run resumes where it left off.</p></div>
+    <div class="card"><div class="ico">📊</div><h3>Sheets as CRM</h3><p>Six tabs, updated live after every step — Leads, Research, Emails, Campaign, Activity, Dashboard.</p></div>
   </div>
 </div></section>
 
-<section id="flow"><div class="wrap" style="text-align:center">
-  <div class="eyebrow">The pipeline</div>
-  <h2 class="sec-title">From new lead to booked call</h2>
+<!-- ══════════ FLOW VIEW ══════════ -->
+<section id="v-flow" class="view"><div class="wrap" style="text-align:center">
+  <div class="eyebrow">The pipeline</div><h2 class="sec-title">From new lead to booked call</h2>
   <div class="flow">
-    <span class="step">New lead</span><span class="arrow">→</span>
-    <span class="step">Dedupe</span><span class="arrow">→</span>
-    <span class="step">Research</span><span class="arrow">→</span>
-    <span class="step">Generate + 2 follow-ups</span><span class="arrow">→</span>
-    <span class="step">Validate</span><span class="arrow">→</span>
-    <span class="step">Send</span><span class="arrow">→</span>
-    <span class="step">Update CRM</span><span class="arrow">→</span>
-    <span class="step">Track replies</span>
+    <span class="step">New lead</span><span class="arrow">→</span><span class="step">Dedupe</span><span class="arrow">→</span>
+    <span class="step">Research</span><span class="arrow">→</span><span class="step">Generate + 2 follow-ups</span><span class="arrow">→</span>
+    <span class="step">Validate</span><span class="arrow">→</span><span class="step">Send</span><span class="arrow">→</span>
+    <span class="step">Track delivery & replies</span>
   </div>
   <div style="margin-top:34px"><a class="btn primary" href="https://cal.com/encesmarketing/15min" target="_blank">Book a 15-min call →</a></div>
 </div></section>
 
 <footer><div class="wrap">
-  Built by Prem · <a href="https://premthakurr.framer.media/" target="_blank" style="color:var(--a1)">Portfolio</a> ·
+  ENCES Outreach · <a href="https://premthakurr.framer.media/" target="_blank" style="color:var(--a1)">Portfolio</a> ·
   <a href="https://cal.com/encesmarketing/15min" target="_blank" style="color:var(--a1)">Book a call</a><br>
-  <span style="opacity:.6">The live control panel (send/run) runs privately on your own machine.</span>
+  <span style="opacity:.6">The send/run control panel runs privately on your own machine. This page is a live viewer.</span>
 </div></footer>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════
-   OPTIONAL LIVE DATA
-   To make this page show your REAL numbers:
-   1. In Google Sheets: File → Share → Publish to web (whole document).
-   2. Put your Sheet ID below. The page reads the Leads + Campaign +
-      Activity Log tabs via the public gviz endpoint (read-only).
-   Leave blank to display the polished sample data.
-   ═══════════════════════════════════════════════════════════════ */
-const SHEET_ID = "";   // e.g. "1AbC...xyz"
+/* ═══ OPTIONAL LIVE DATA ═══
+   Publish your Google Sheet (File → Share → Publish to web) and paste the Sheet ID below.
+   The page reads Leads, Campaign, Emails, and Activity Log tabs (read-only). Blank = sample data.
+   Bounce tracking: add a "Bounced" (Yes/No) column to your Campaign tab; the engine can fill it. */
+const SHEET_ID = "";
 
 const SAMPLE = {
-  metrics:{total:248,new:12,sent:181,replies:23,reply_rate:"12.7%",meetings:6,
-           research:198,email_ready:9,needs_review:14,social:21,failed:3,fu1:120,fu2:64},
+  metrics:{total:248,new:12,research:198,email_ready:9,sent:181,delivered:171,bounced:10,
+           replies:23,reply_rate:"12.7%",bounce_rate:"5.5%",delivered_rate:"94.5%",meetings:6,needs_review:14,social:21,failed:3},
   pipeline:{Leads:248,Researched:198,"Email ready":9,Sent:181,Replied:23,Meetings:6},
-  outcomes:{Sent:181,Replied:23,Meetings:6},
+  deliver:{Delivered:171,Bounced:10,Replied:23},
   feed:[
-    ["Send initial","Sent","Northwind Studio","2m ago","📤"],
+    ["Send initial","Delivered","Northwind Studio","2m ago","📤"],
     ["Reply detected","Reply","Lumen Interiors","14m ago","💬"],
+    ["Bounce detected","Bounced","Ghost Retail","28m ago","⚠️"],
     ["Research","Complete","Atlas Woodworks","31m ago","🔎"],
-    ["Send follow-up 1","Sent","Verde Cafe Group","1h ago","🔁"],
-    ["Validation","Passed","Harbor & Co","1h ago","✅"],
-    ["Email discovery","Social Outreach","Pixel Forge","2h ago","📱"],
+    ["Send follow-up 1","Delivered","Verde Cafe Group","1h ago","🔁"],
+    ["Meeting booked","Meeting","Harbor & Co","2h ago","📅"],
+  ],
+  emails:[
+    ["Northwind Studio","hello@northwind.co","A quick note on your booking flow","replied",1,1,0,1,1,0,0],
+    ["Lumen Interiors","studio@lumen.design","Your portfolio page + one idea","replied",1,1,0,1,1,1,0],
+    ["Harbor & Co","team@harborco.com","Loved your rebrand — one gap","meeting",1,1,0,1,1,0,1],
+    ["Atlas Woodworks","info@atlaswood.com","Your craftsmanship deserves better UX","delivered",1,1,0,0,1,0,0],
+    ["Verde Cafe Group","hi@verdecafe.com","Menu → mobile experience","delivered",1,1,0,0,1,1,0],
+    ["Ghost Retail","contact@ghostretail.io","A small thing on your homepage","bounced",1,0,1,0,0,0,0],
+    ["Pixel Forge","hello@pixelforge.studio","Your visual system is close","delivered",1,1,0,0,0,0,0],
+    ["Maple & Stone","care@mapleandstone.com","One idea for your store page","delivered",1,1,0,0,1,0,0],
   ]
 };
 
-const CARD_DEFS = [
-  ["total","Total leads","g1",""],["sent","Emails sent","",""],
-  ["replies","Replies","g2",""],["reply_rate","Reply rate","g2",""],
-  ["meetings","Meetings booked","g2",""],["needs_review","Needs review","",""],
-];
+/* ── view routing ── */
+const views=['dashboard','emails','features','flow'];
+function showView(v){
+  views.forEach(x=>document.getElementById('v-'+x).classList.toggle('active',x===v));
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.toggle('active',a.dataset.view===v));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('[data-view]').forEach(el=>el.onclick=e=>{e.preventDefault();showView(el.dataset.view)});
 
+/* ── dashboard cards ── */
+const CARD_DEFS=[["total","Total leads","g1"],["sent","Emails sent",""],["delivered","Delivered","g2"],
+  ["bounced","Bounced","danger"],["replies","Replies","g2"],["reply_rate","Reply rate","g2"],
+  ["meetings","Meetings","g2"],["bounce_rate","Bounce rate","danger"]];
 function renderCards(m){
-  document.getElementById('cards').innerHTML = CARD_DEFS.map(([k,label,cls])=>`
-    <div class="card ${cls}"><div class="k">${label}</div>
-    <div class="v" data-count="${m[k]??0}">${typeof m[k]==='string'?m[k]:'0'}</div></div>`).join('');
+  document.getElementById('cards').innerHTML=CARD_DEFS.map(([k,l,c])=>`
+    <div class="card ${c}"><div class="k">${l}</div><div class="v" data-count="${m[k]??0}">${typeof m[k]==='string'?m[k]:'0'}</div></div>`).join('');
+  animate();
+}
+/* ── email summary cards ── */
+const ECARDS=[["sent","Total sent",""],["delivered","Delivered","g2"],["bounced","Bounced","danger"],
+  ["replies","Replied","g2"],["meetings","Meetings booked","g2"],["delivered_rate","Delivered rate","g2"],
+  ["reply_rate","Reply rate","g2"],["bounce_rate","Bounce rate","danger"]];
+function renderEmailCards(m){
+  document.getElementById('emailCards').innerHTML=ECARDS.map(([k,l,c])=>`
+    <div class="card ${c}"><div class="k">${l}</div><div class="v" data-count="${m[k]??0}">${typeof m[k]==='string'?m[k]:'0'}</div></div>`).join('');
+  animate();
+}
+function animate(){
   document.querySelectorAll('.v[data-count]').forEach(el=>{
-    const target=el.getAttribute('data-count');
-    if(isNaN(parseFloat(target))) return;
-    let n=0, end=parseFloat(target), step=Math.max(1,end/40);
-    const t=setInterval(()=>{n+=step; if(n>=end){n=end;clearInterval(t)} el.textContent=Math.round(n)},22);
+    const target=el.getAttribute('data-count'); if(isNaN(parseFloat(target)))return;
+    let n=0,end=parseFloat(target),step=Math.max(1,end/38);
+    const t=setInterval(()=>{n+=step;if(n>=end){n=end;clearInterval(t)}el.textContent=Math.round(n)},20);
   });
 }
 
-let funnelChart, donutChart;
-function renderCharts(pipeline, outcomes){
-  const grid={color:'rgba(255,255,255,.06)'}, tick={color:'#93a0b5',font:{family:'Inter'}};
+/* ── charts ── */
+let funnelChart,donutChart;
+function renderCharts(pipeline,deliver){
+  const grid={color:'rgba(255,255,255,.06)'},tick={color:'#9aa0b2',font:{family:'Inter'}};
   const g=document.getElementById('funnel').getContext('2d');
-  const grad=g.createLinearGradient(0,0,600,0); grad.addColorStop(0,'#6d8bff'); grad.addColorStop(1,'#a06bff');
+  const grad=g.createLinearGradient(0,0,600,0);grad.addColorStop(0,'#b4e925');grad.addColorStop(1,'#8fd000');
   funnelChart?.destroy();
   funnelChart=new Chart(g,{type:'bar',data:{labels:Object.keys(pipeline),
     datasets:[{data:Object.values(pipeline),backgroundColor:grad,borderRadius:8,barThickness:20}]},
-    options:{indexAxis:'y',plugins:{legend:{display:false}},
-      scales:{x:{grid,ticks:tick},y:{grid:{display:false},ticks:tick}}}});
-  const d=document.getElementById('donut').getContext('2d');
-  donutChart?.destroy();
-  donutChart=new Chart(d,{type:'doughnut',data:{labels:Object.keys(outcomes),
-    datasets:[{data:Object.values(outcomes),backgroundColor:['#6d8bff','#25e6b0','#a06bff'],borderWidth:0}]},
-    options:{cutout:'66%',plugins:{legend:{position:'bottom',labels:{color:'#93a0b5',padding:14}}}}});
+    options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid,ticks:tick},y:{grid:{display:false},ticks:tick}}}});
+  const d=document.getElementById('donut').getContext('2d');donutChart?.destroy();
+  donutChart=new Chart(d,{type:'doughnut',data:{labels:Object.keys(deliver),
+    datasets:[{data:Object.values(deliver),backgroundColor:['#b4e925','#ff5d73','#8fd000'],borderWidth:0}]},
+    options:{cutout:'66%',plugins:{legend:{position:'bottom',labels:{color:'#9aa0b2',padding:14}}}}});
 }
-
 function renderFeed(items){
-  document.getElementById('feed').innerHTML = items.map(([a,r,c,t,ic])=>`
-    <div class="item"><div class="ic">${ic||'•'}</div>
-    <div><div><b>${a}</b> · ${r} — <span style="color:var(--muted)">${c}</span></div>
+  document.getElementById('feed').innerHTML=items.map(([a,r,c,t,ic])=>`
+    <div class="item"><div class="ic">${ic||'•'}</div><div><div><b>${a}</b> · ${r} — <span style="color:var(--muted)">${c}</span></div>
     <div class="t">${t}</div></div></div>`).join('');
 }
 
-function boot(data, live){
-  document.getElementById('dataSource').textContent = live ? 'Live from your sheet' : 'Live demo (sample data)';
-  if(!live) document.getElementById('sampleBanner').style.display='block';
-  renderCards(data.metrics); renderCharts(data.pipeline, data.outcomes); renderFeed(data.feed);
+/* ── email table ── */
+let EMAILS=[],EFILTER='all';
+function statusTag(e){
+  const [,,,status]=e;
+  const map={replied:'t-replied',delivered:'t-delivered',bounced:'t-bounced',meeting:'t-meeting',sent:'t-sent'};
+  return `<span class="tag ${map[status]||'t-sent'}">${status}</span>`;
+}
+function yn(v,bounce){return v?`<span class="yes">✓</span>`:`<span class="${bounce?'bno':'no'}">${bounce?'✕':'—'}</span>`}
+function renderEmailTable(){
+  const q=(document.getElementById('emailSearch').value||'').toLowerCase();
+  const tb=document.querySelector('#emailTable tbody');
+  const rows=EMAILS.filter(e=>{
+    const [co,em,su,st]=e;
+    if(EFILTER!=='all' && st!==EFILTER) return false;
+    return !q || (co+em+su).toLowerCase().includes(q);
+  });
+  tb.innerHTML=rows.map(e=>{
+    const [co,em,su,st,sent,deliv,bounced,replied,fu1,fu2,meeting]=e;
+    return `<tr><td><b>${co}</b></td><td style="color:var(--muted)">${em}</td>
+      <td>${su}</td><td>${statusTag(e)}</td>
+      <td>${yn(sent)}</td><td>${yn(deliv)}</td><td>${bounced?'<span class="bno">✕</span>':'<span class="no">—</span>'}</td>
+      <td>${yn(replied)}</td><td>${yn(fu1)}</td><td>${yn(fu2)}</td><td>${meeting?'<span class="t-meeting tag">booked</span>':'<span class="no">—</span>'}</td></tr>`;
+  }).join('') || `<tr><td colspan="11" style="color:var(--muted);text-align:center;padding:26px">No emails match.</td></tr>`;
+}
+document.getElementById('emailSearch').addEventListener('input',renderEmailTable);
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+  document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+  c.classList.add('active');EFILTER=c.dataset.filter;renderEmailTable();
+});
+
+/* ── boot ── */
+function boot(d,live){
+  document.getElementById('dataSource').textContent=live?'Live from your sheet':'Live demo (sample data)';
+  document.getElementById('emailSource').textContent=live?'Live from your sheet':'Sample data';
+  if(!live)document.getElementById('sampleBanner').style.display='block';
+  renderCards(d.metrics);renderEmailCards(d.metrics);renderCharts(d.pipeline,d.deliver);renderFeed(d.feed);
+  EMAILS=d.emails;renderEmailTable();
 }
 
-/* Try live data from a published sheet; fall back to sample. */
+/* ── live loader (published sheet via gviz) ── */
 async function gviz(tab){
   const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tab)}`;
-  const txt=await (await fetch(url)).text();
-  const json=JSON.parse(txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1));
-  const cols=json.table.cols.map(c=>c.label);
-  return json.table.rows.map(r=>{const o={};(r.c||[]).forEach((c,i)=>o[cols[i]]=c?c.v:'');return o});
+  const txt=await(await fetch(url)).text();
+  const j=JSON.parse(txt.substring(txt.indexOf('{'),txt.lastIndexOf('}')+1));
+  const cols=j.table.cols.map(c=>c.label);
+  return j.table.rows.map(r=>{const o={};(r.c||[]).forEach((c,i)=>o[cols[i]]=c?c.v:'');return o});
 }
 async function loadLive(){
   const yes=v=>['yes','true','1'].includes(String(v).toLowerCase().trim());
-  const leads=await gviz('Leads'), camp=await gviz('Campaign'), act=await gviz('Activity Log');
+  const leads=await gviz('Leads'),camp=await gviz('Campaign'),emails=await gviz('Emails'),act=await gviz('Activity Log');
   const st=s=>leads.filter(l=>String(l['Status']).trim()===s).length;
   const sent=camp.filter(c=>yes(c['Email Sent'])).length;
+  const bounced=camp.filter(c=>yes(c['Bounced'])).length;
   const replies=camp.filter(c=>yes(c['Reply Received'])).length;
   const meetings=camp.filter(c=>yes(c['Meeting Booked'])).length;
+  const delivered=Math.max(sent-bounced,0);
+  const byId={};camp.forEach(c=>byId[String(c['Lead ID']).trim()]=c);
+  const rows=emails.map(e=>{
+    const c=byId[String(e['Lead ID']).trim()]||{};
+    const sv=yes(c['Email Sent']),bv=yes(c['Bounced']),rv=yes(c['Reply Received']),mv=yes(c['Meeting Booked']);
+    const status=bv?'bounced':mv?'meeting':rv?'replied':sv?'delivered':'sent';
+    return [e['Company']||c['Company']||'',c['Email']||e['Email']||'',e['Subject']||'',status,
+      sv?1:0,(sv&&!bv)?1:0,bv?1:0,rv?1:0,yes(c['Follow-up 1 Sent'])?1:0,yes(c['Follow-up 2 Sent'])?1:0,mv?1:0];
+  });
   const data={
-    metrics:{total:leads.length,new:st('New'),sent,replies,
-      reply_rate:sent?((replies/sent*100).toFixed(1)+'%'):'0%',meetings,
-      needs_review:st('Needs Review'),social:st('Social Outreach'),
-      research:st('Research Complete'),email_ready:st('Email Ready'),failed:st('Failed'),
-      fu1:camp.filter(c=>yes(c['Follow-up 1 Sent'])).length,fu2:camp.filter(c=>yes(c['Follow-up 2 Sent'])).length},
+    metrics:{total:leads.length,new:st('New'),research:st('Research Complete'),email_ready:st('Email Ready'),
+      sent,delivered,bounced,replies,meetings,needs_review:st('Needs Review'),social:st('Social Outreach'),failed:st('Failed'),
+      reply_rate:sent?((replies/sent*100).toFixed(1)+'%'):'0%',
+      bounce_rate:sent?((bounced/sent*100).toFixed(1)+'%'):'0%',
+      delivered_rate:sent?((delivered/sent*100).toFixed(1)+'%'):'0%'},
     pipeline:{Leads:leads.length,Researched:st('Research Complete'),"Email ready":st('Email Ready'),Sent:sent,Replied:replies,Meetings:meetings},
-    outcomes:{Sent:sent,Replied:replies,Meetings:meetings},
-    feed:act.slice(-8).reverse().map(a=>[a['Action']||'',a['Result']||'',a['Company']||'',a['Timestamp']||'','•'])
+    deliver:{Delivered:delivered,Bounced:bounced,Replied:replies},
+    feed:act.slice(-8).reverse().map(a=>[a['Action']||'',a['Result']||'',a['Company']||'',a['Timestamp']||'','•']),
+    emails:rows
   };
   boot(data,true);
 }
-
-if(SHEET_ID){ loadLive().catch(()=>boot(SAMPLE,false)); } else { boot(SAMPLE,false); }
+if(SHEET_ID){loadLive().catch(()=>boot(SAMPLE,false));}else{boot(SAMPLE,false);}
 </script>
 </body>
 </html>
