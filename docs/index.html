@@ -331,12 +331,15 @@ boot(EMPTY,false);
 let accessToken=null;
 const CLIENT_ID=()=>localStorage.getItem('imp_clientId')||'';
 const SHEET_ID=()=>localStorage.getItem('imp_sheetId')||'';
+function saveTok(r){accessToken=r.access_token;localStorage.setItem('imp_gtoken',r.access_token);localStorage.setItem('imp_gexp',String(Date.now()+((r.expires_in||3600)-90)*1000));}
+function cachedTok(){const t=localStorage.getItem('imp_gtoken');return (t&&Date.now()<+(localStorage.getItem('imp_gexp')||0))?t:null;}
 document.getElementById('connectBtn').onclick=()=>{
   if(!CLIENT_ID()||!SHEET_ID()){ alert('First set your OAuth Client ID and Sheet ID on the Import page.'); location.href='./import.html'; return; }
-  const tc=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID(),scope:'https://www.googleapis.com/auth/spreadsheets.readonly',
-    callback:r=>{ if(r.error){document.getElementById('dataSource').textContent='sign-in failed';return;} accessToken=r.access_token; loadLive(); }});
+  const tc=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID(),scope:'https://www.googleapis.com/auth/spreadsheets',
+    callback:r=>{ if(r.error){document.getElementById('dataSource').textContent='sign-in failed';return;} saveTok(r); loadLive(); }});
   tc.requestAccessToken({prompt:''});
 };
+window.addEventListener('load',()=>{ const ct=cachedTok(); if(ct&&SHEET_ID()){ accessToken=ct; loadLive(); } });
 async function sget(tab){
   const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID()}/values/${encodeURIComponent(tab)}`,
     {headers:{Authorization:'Bearer '+accessToken}});

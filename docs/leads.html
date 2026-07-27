@@ -142,14 +142,17 @@ const REPO_OWNER='premth4kur', REPO_NAME='ai-cold-outreach-crm', WORKFLOW='run.y
   el.addEventListener('input',()=>localStorage.setItem('imp_'+k,el.value.trim()));
 });
 
-/* ── OAuth ── */
+/* ── OAuth (token cached in browser, shared across pages) ── */
 let accessToken=null,tokenClient=null;
+function saveTok(r){accessToken=r.access_token;localStorage.setItem('imp_gtoken',r.access_token);localStorage.setItem('imp_gexp',String(Date.now()+((r.expires_in||3600)-90)*1000));}
+function cachedTok(){const t=localStorage.getItem('imp_gtoken');return (t&&Date.now()<+(localStorage.getItem('imp_gexp')||0))?t:null;}
 $('#signBtn').onclick=()=>{
   const cid=$('#clientId').value.trim(); if(!cid){alert('Enter your OAuth Client ID first.');return;}
-  tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/spreadsheets.readonly',
-    callback:r=>{ if(r.error){setAuth(false,r.error);return;} accessToken=r.access_token; setAuth(true); $('#refreshBtn').disabled=false; loadLeads(); }});
+  tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/spreadsheets',
+    callback:r=>{ if(r.error){setAuth(false,r.error);return;} saveTok(r); setAuth(true); $('#refreshBtn').disabled=false; loadLeads(); }});
   tokenClient.requestAccessToken({prompt:''});
 };
+window.addEventListener('load',()=>{ const ct=cachedTok(); if(ct&&$('#sheetId').value.trim()){ accessToken=ct; setAuth(true); $('#refreshBtn').disabled=false; loadLeads(); } });
 $('#refreshBtn').onclick=()=>loadLeads();
 function setAuth(ok,msg){const p=$('#authState');p.textContent=ok?'connected':(msg||'not connected');p.className='pill'+(ok?' on':'');}
 

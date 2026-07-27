@@ -138,10 +138,15 @@ function initToken(){
     client_id:cid, scope:SCOPE,
     callback:(resp)=>{
       if(resp.error){setAuth(false,resp.error);return;}
-      accessToken=resp.access_token; setAuth(true); maybeEnableImport();
+      accessToken=resp.access_token;
+      localStorage.setItem('imp_gtoken',resp.access_token);
+      localStorage.setItem('imp_gexp',String(Date.now()+((resp.expires_in||3600)-90)*1000));
+      setAuth(true); maybeEnableImport();
     }
   });
 }
+window.addEventListener('load',()=>{const t=localStorage.getItem('imp_gtoken');
+  if(t&&Date.now()<+(localStorage.getItem('imp_gexp')||0)){accessToken=t;setAuth(true);maybeEnableImport();}});
 function setAuth(ok,msg){
   const p=$('#authState');
   p.textContent = ok?'connected':(msg||'not connected');
