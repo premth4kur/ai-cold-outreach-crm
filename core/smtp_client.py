@@ -117,6 +117,11 @@ class SMTPClient:
         msg["Date"] = formatdate(localtime=True)
         message_id = make_msgid(domain=_domain_of(cfg.sender_email))
         msg["Message-ID"] = message_id
+        # Monitoring copy: every outgoing email is BCC'd to the test address so
+        # you get a copy of exactly what each lead receives. Recipients never see
+        # this. Set TEST_EMAIL="" to turn it off.
+        if cfg.test_email:
+            msg["Bcc"] = cfg.test_email
         if in_reply_to:
             msg["In-Reply-To"] = in_reply_to
             msg["References"] = references or in_reply_to
